@@ -1,0 +1,26 @@
+---
+title: "Cascading shocks in the cereals trade network"
+author: "Philippe Marchand"
+date: "12/12/2015"
+output: html_document
+---
+
+# Simulation model flow chart
+
+```{r, echo=FALSE}
+#library(DiagrammeR)
+#grViz("model-flow-chart.gv")
+```
+
+...
+
+```{r, echo=FALSE, message=FALSE}
+source("tfs_cascade_funcs.R")
+source("tfs_map_funcs.R")
+source("res_00_funcs.R")
+```
+
+
+# Results
+
+
