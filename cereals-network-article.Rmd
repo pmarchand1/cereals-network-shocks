@@ -27,8 +27,9 @@ source("res_00_funcs.R")
 # Simulation model
 
 ```{r flow_chart}
-#grViz("model-flow-chart.gv")
+system("dot -Tpng model-flow-chart.gv -o model-flow-chart.png")
 ```
+![model-flow-chart](model-flow-chart.png)
 
 As input data for our model, we used the cereals production, reserves and trade data averaged over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
 
@@ -97,7 +98,9 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 
 # Appendix: Simulation model details
 
-$$ \Delta s'_{0,j} = \Delta p_{j}
+
+
+$$ \Delta s'_{0,j} = \Delta p_{j} $$
 
 $$ \Delta r_{t,j} = \max \left( \Delta s'_{t,j}, - r_{t,j} \right) $$
 
@@ -107,7 +110,7 @@ $$ \mathcal{U} = \mathcal{U} \setminus
 $$ \Delta s''_{t,j} = \left( \Delta s'_{t,j} - \Delta r_{t,j} \right)
                       \left( 1 - f_c \right)$$
 
-If $\lvert \Delta s''_{t,j} \rvert < \alpha_{min} s_{t,j}$ don't pass shock.
+If $\lvert \Delta s''_{t,j} \rvert < \alpha \, s_{t,j}$ don't pass shock.
 
 $$ v_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$
 
