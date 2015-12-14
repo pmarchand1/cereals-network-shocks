@@ -5,22 +5,122 @@ date: "12/12/2015"
 output: html_document
 ---
 
-# Simulation model flow chart
-
-```{r, echo=FALSE}
-#library(DiagrammeR)
-#grViz("model-flow-chart.gv")
+```{r load_packages, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DiagrammeR)
+library(knitr)
 ```
 
-...
+```{r global_options, include=FALSE}
+options(digits = 3)
+opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
 
-```{r, echo=FALSE, message=FALSE}
+```{r load_funcs}
 source("tfs_cascade_funcs.R")
 source("tfs_map_funcs.R")
 source("res_00_funcs.R")
+```
+
+# Simulation model
+
+```{r flow_chart}
+#grViz("model-flow-chart.gv")
+```
+
+As input data for our model, we used the cereals production, reserves and trade data averaged over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
+
+```{r load_trade_data}
+years <- c(1996, 2003, 2009)
+trade_dat <- lapply(years, get_trade_data, mov_avg = 2,
+                    prod_trade_file = "data/cereals_prod_trade.RData", 
+                    stocks_file = "data/cereals_stocks.RData")
+names(trade_dat) <- years
+trade_st <- bind_rows(lapply(trade_dat, get_trade_stats_sum), .id = "year")
+kable(trade_st, 
+      col.names = c("year", "$\\sum p$ (kcal)", "$\\sum r$ (kcal)", 
+                    "# trade links", "$\\sum F$ (kcal)",  
+                    "$\\sum r / \\sum p$", "$\\sum F / \\sum p$"),
+      caption = paste("Summary statistics of the cereals trade data",
+                      "for each time period considered in our analysis"))
+```
+
+To separate the effects of changes in reserves and trade flows in our results, we performed two different scalings of the 1996 and 2003 reserves: in the $r$-scaled version, all countries' reserves are scaled by a common factor so that the ratio of total $r$ to total $p$ matches that of 2009; in the $r/s$-scaled version, the reserves are set individually in each country so that the fraction of $r$ to net supply $s$ matches the 2009 data. Compared with the original data, simulation results from these scaled versions allow us to identify the impact of changes in total reserves or in the distribution of these reserves between countries, respectively.
+
+```{r r_scaling}
+Rscale <- trade_st$RP_ratio / trade_st$RP_ratio[trade_st$year == "2009"]
+trade_Rscaled <- Map(
+    function(dat, scal) {
+        dat$R0 <- dat$R0 / scal
+        dat
+    }, trade_dat, Rscale)
+
+S0 <- lapply(trade_dat, function(x) x$P0 + colSums(x$E0) - rowSums(x$E0))
+RSscale <- trade_dat$`2009`$R0 / S0$`2009`
+trade_RSscaled <- Map(
+    function(dat, s0) {
+        dat$R0 <- RSscale[names(s0)] * s0
+        dat
+    }, trade_dat, S0)
+```
+
+We define a model run as a set that includes one simulation starting from each country for each of the three years. In addition to the input data (original, $r$-scaled or $r/s$-scaled version), we set three global parameters by model run: the initial shock magnitude as a fraction of the target country's production ($f_p$), the fraction of reserves that are available to absorb a shock ($f_r$), as well as the fraction of a shock absorbed by consumption after reserves are depleted ($f_c$, as defined in our model above). In practice, $f_r < 1$ may reflect the fact that some of the reported reserves are already committed to trade or that countries are unwilling to let reserves drop below some floor amount. 
+
+```{r run_sims}
+get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
+    res <- lapply(trade_data, 
+                  function(x) sim_allc(pfrac, x$P0, rfrac*x$R0, x$E0, cfrac))
+    st <- lapply(res, get_stats_allc)
+    trade_stats <- bind_rows(lapply(trade_data, get_trade_stats_by_cty),
+                             .id = "year") 
+    sim_stats <- bind_rows(lapply(st, get_sim_stats_by_cty))
+    cbind(trade_stats, sim_stats)
+}
+
+#stats_by_cty <- bind_rows(
+#    "02_05"    = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.01),
+#    "Rscaled"  = get_multiyear_sim_results(trade_Rscaled, 0.2, 0.5, 0.01),
+#    "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
+#    "01_025"   = get_multiyear_sim_results(trade_dat, 0.1, 0.25, 0.01),
+#    "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
+#    "015_05"    = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
+#    "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
+#    "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
+#    .id = "params")
 ```
 
 
 # Results
 
 
+# Appendix: Simulation model details
+
+$$ \Delta s'_{0,j} = \Delta p_{j}
+
+$$ \Delta r_{t,j} = \max \left( \Delta s'_{t,j}, - r_{t,j} \right) $$
+
+$$ \mathcal{U} = \mathcal{U} \setminus 
+    \left\{ j \mid \Delta s'_{t,j} < - r_{t,j} \right\} $$
+                 
+$$ \Delta s''_{t,j} = \left( \Delta s'_{t,j} - \Delta r_{t,j} \right)
+                      \left( 1 - f_c \right)$$
+
+If $\lvert \Delta s''_{t,j} \rvert < \alpha_{min} s_{t,j}$ don't pass shock.
+
+$$ v_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$
+
+$$ \Delta b_{t,j} = \max \left( \Delta s'_{t,j}, - v_{t,j} \right) $$
+
+$$ \Delta c_{t,j} = \Delta s'_{t,j} - \Delta r_{t,j} - \Delta b_{t,j} $$
+
+$$ \Delta s_{t,j} = \Delta r_{t,j} + \Delta_c{t,j} $$
+
+$$ \Delta F_{t,jk} = \left[ \left( \frac{\Delta b_{t,j}}{ v_{t,j}} \right)  
+                          - \mathbf{1}_{\mathcal{U}}(j) 
+                            \left( \frac{\Delta b_{t,k}}{ v_{t,k}} \right)
+                            \right] F_{t,jk} $$
+                            
+$$ \Delta s'_{t+1,j} = \sum_k \Delta F_{t,kj} - \sum_k \Delta F_{t,jk} 
+                      + \Delta b_{t,j} $$
