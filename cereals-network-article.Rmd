@@ -1,6 +1,5 @@
 ---
 title: "Cascading shocks in the cereals trade network"
-author: "Philippe Marchand"
 date: "12/12/2015"
 output: html_document
 ---
@@ -98,32 +97,47 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 
 # Appendix: Simulation model details
 
+In our model, we define the annual net supply (or simply "supply") $s_j$ of a food commodity in country $j$ as:
+$$s_j = p_j + i_j - e_j \, ,$$ 
+where $p$ is production, $i$ is imports and $e$ is exports. The difference between this supply and domestic consumption $c$ must result in a change in the country's reserves $r$, so that: 
+$$s_j = c_j + \Delta r_j \, .$$ 
+Note that this convention differs from the FAO's definition of domestic supply, which includes a term representing transfer *from* the reserves, whereas a positive $\Delta r$ in our case represents a transfer *to* the reserves. 
 
+We initialize the model with realistic production, trade and reserves data and assume that the initial consumption equals supply (i.e. $\Delta r = 0$ before any shock). The trade data is represented by a matrix $F$ where $F_{jk}$ is the volume of exports from country $j$ to country $k$. 
 
-$$ \Delta s'_{0,j} = \Delta p_{j} $$
+In the first iteration of the model ($t$ = 1), a supply shock is initiated from a drop in production:
+$$ \Delta s'_{1,j} = \Delta p_{j} \, ,$$
+where $\Delta p_{j} = 0$ for all but one or a few countries. In the following iterations, $\Delta s'$ will be due to decrease in imports or increase in exports as the shock is propagated through trade. The prime ($'$) notation is used to distinguish different temporary values of the shock within a single iteration. 
 
-$$ \Delta r_{t,j} = \max \left( \Delta s'_{t,j}, - r_{t,j} \right) $$
+At the start of a new iteration, all countries receiving a new shock (form any source) first attempt to absorb it through their reserves:
+$$ \Delta r_{t,j} = \max \left( \Delta s'_{t,j}, - r_{t,j} \right) \, . $$ 
 
+Any country that has depleted its reserves (or had none to begin with) will block any increase in its outgoing trade and is thus removed from the set $\mathcal{U}$ (which initially includes all countries).
 $$ \mathcal{U} = \mathcal{U} \setminus 
-    \left\{ j \mid \Delta s'_{t,j} < - r_{t,j} \right\} $$
-                 
+    \left\{ j \mid \Delta s'_{t,j} < - r_{t,j} \right\} \, . $$
+    
+At this point, countries left with a residual shock absorb a fraction of it ($f_c$) by reducing domestic consumption, leaving an amount $\Delta s''_{t,j}$ that can be transferred to other countries through trade:                 
 $$ \Delta s''_{t,j} = \left( \Delta s'_{t,j} - \Delta r_{t,j} \right)
-                      \left( 1 - f_c \right)$$
+                      \left( 1 - f_c \right) \, . $$ 
+To avoid spending a large fraction of the simulation passing tiny residual shocks, we define a fractional threshold $\alpha$ (set at 0.001%) so that countries simply absorb their residual shock when $\lvert \Delta s''_{t,j} \rvert < \alpha \, s_{t,j}$. 
 
-If $\lvert \Delta s''_{t,j} \rvert < \alpha \, s_{t,j}$ don't pass shock.
+A country can transfer a shock to its trade partners by either reducing its exports or increasing its imports, i.e. by decreasing its balance of trade $b$. We set an upper bound on the magnitude of this change to be equal to the total volume $v$ on all the country's trade links, excluding any "blocked" incoming links:
+$$ v_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$ and
+$$ \Delta b_{t,j} = \max \left( \Delta s''_{t,j}, - v_{t,j} \right) \, ,$$ 
+where $\mathbf{1}_{\mathcal{U}}(k)$ equals 1 if $k$ is in $\mathcal{U}$ and 0 otherwise.  
 
-$$ v_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$
-
-$$ \Delta b_{t,j} = \max \left( \Delta s'_{t,j}, - v_{t,j} \right) $$
-
-$$ \Delta c_{t,j} = \Delta s'_{t,j} - \Delta r_{t,j} - \Delta b_{t,j} $$
-
-$$ \Delta s_{t,j} = \Delta r_{t,j} + \Delta_c{t,j} $$
-
+Each country then changes the trade volume on each unblocked link (- if outgoing, + if incoming) proportionally to the current volume on that link. From this, we can calculate the change of any element of the trade matrix as:
 $$ \Delta F_{t,jk} = \left[ \left( \frac{\Delta b_{t,j}}{ v_{t,j}} \right)  
                           - \mathbf{1}_{\mathcal{U}}(j) 
                             \left( \frac{\Delta b_{t,k}}{ v_{t,k}} \right)
-                            \right] F_{t,jk} $$
-                            
+                            \right] F_{t,jk} \, .$$
+
+Finally, any portion of the initial shock not absorbed by reserves or passed through trade results in a decrease in consumption:
+$$ \Delta c_{t,j} = \Delta s'_{t,j} - \Delta r_{t,j} - \Delta b_{t,j} \, .$$
+
+To start the next iteration, we update the vectors $r$, $c$ and $s$ as well as the trade matrix $F$ based on the computed $\Delta$. Note that the actual change in $s$ for a given country only depends on the fraction of the shock that was absorbed internally:
+$$ \Delta s_{t,j} = \Delta r_{t,j} + \Delta c{t,j} \, .$$
+The new shock received by each country at the next iteration equal to any increase in exports or decrease in imports due to other countries' actions at this iteration, i.e.:
 $$ \Delta s'_{t+1,j} = \sum_k \Delta F_{t,kj} - \sum_k \Delta F_{t,jk} 
-                      + \Delta b_{t,j} $$
+                      + \Delta b_{t,j} \, ,$$
+where the last term serves to remove the effect of the country's own actions. When $\Delta s'_{t+1, j} = 0$ for all $j$, all shocks have been absorbed internally and the simulation ends.

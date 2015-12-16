@@ -8,7 +8,7 @@ digraph sim_model {
     D [label = <Block outgoing trade flows>]
     E [label = <Reduce <I>c</I> by fraction <I>f<SUB>c</SUB></I> of res. shock>]
     F [shape = ellipse, label = <Is res. shock less than &alpha; * <I>s</I>?>]
-    G [label = <Reduce <I>e</I> and increase <I>i</I> on all unblocked <BR/> links, prop. to initial volume on link>]
+    G [label = <Reduce <I>e</I> and increase <I>i</I> on all unblocked <BR/> links, prop. to current volume on link>]
     H [label = <Reduce <I>c</I> to absorb any res. shock>]
     I [label = <Update <I>r</I>, <I>c</I>, <I>s</I> and <I>F</I> at iteration <I>t+1</I>>]
     J [label = <Compute new shock received from other countries>]
