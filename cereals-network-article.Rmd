@@ -1,7 +1,10 @@
 ---
 title: "Cascading shocks in the cereals trade network"
 date: "12/12/2015"
-output: html_document
+output: 
+    pdf_document:
+        fig_caption: yes
+bibliography: ref.bib
 ---
 
 ```{r load_packages, include=FALSE}
@@ -23,14 +26,48 @@ source("tfs_map_funcs.R")
 source("res_00_funcs.R")
 ```
 
-# Simulation model
+# Methods
+
+## Simulation model
+
+Our model simulates the impact of a "shock" to the supply of some food commodity on the global trade network for that commodity. The shock is initiated as a drop in production in one or more countries and propagates through the network over multiple intertions of the simulation loop, which is summarized in the flow chart below. 
+
+At each iteration, affected countries first tap into their reserves. When reserves are depleted, countries absorb a fraction of the residual shock by reducing domestic consumption, then reduce their trade balance by decreasing exports and increasing exports, with the impact spread to each trade link proportionally to the volume on that link. This effectively propagates the shock to those countries' trade partners. Finally, any shock that could not be propagated is absorbed by domestic consumption, and the cycle is repeated until all shocks have been absorbed (see the Appendix a detailed description of the model). 
+
+To avoid arbitrarily small shocks being propagated, countries will absorb (through consumption) any shock smaller than a fraction $\alpha$ of their current supply; we set $\alpha$ to 0.001% for all our simulations.
+
+```{r variables_table}
+kable(data.frame(rbind(
+    c("$p$", "Production by country"),
+    c("$r$", "Reserves by country"),
+    c("$F$", "Trade matrix ($F_{jk}$ = exports from country $j$ to country $k$)"),
+    c("$e$", "Exports by country i.e. $\\sum_k F_{jk}$"),
+    c("$i$", "Imports by country i.e. $\\sum_k F_{kj}$"),
+    c("$c$", "Domestic consumption by country (for any use)"),
+    c("$s$", "Net supply, $s = p + i - e$"),
+    c("$\\alpha$", "Minimum threshold (as fraction of $s$) for a shock to be propagated"),
+    c("$f_c$", "Fraction of residual shock absorbed by $c$ if $r$ is depleted"),
+    c("$f_r$", "Fraction of actual reserves that are available to absorb shocks"),
+    c("$f_p$", "Magnitude of initial shock as a fraction of the affected country's $p$")
+)), caption = "List of variables and parameters", col.names = c("Symbol", "Description"))
+```
 
 ```{r flow_chart}
-system("dot -Tpng model-flow-chart.gv -o model-flow-chart.png")
+#system("dot -Tpng model-flow-chart.gv -o model-flow-chart.png")
+system("dot -Tpdf model-flow-chart.gv -o model-flow-chart.pdf")
 ```
-![model-flow-chart](model-flow-chart.png)
 
-As input data for our model, we used the cereals production, reserves and trade data averaged over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
+![Simulation model flow chart](model-flow-chart.pdf)
+
+## Data
+
+We used data from the Food and Agricultural Organization of the United Nations' online database (FAOSTAT, faostat3.fao.org) to construct the cereals production and trade data. The production and trade data for individual primary and secondary commodities in the cereals group was converted into kcal equivalents [@fao2001] and aggregated by country and year (*supplementary table to be added later*). We used population data from FAOSTAT to subset the network so that only countries with a population exceeding half a million people during the period 1986-2011. We rectified the data as described in @carr2013 to account for the merging and fracturing of countries between years.
+
+We obtained data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, milled rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we chose to apportion these reserves between EU countries for each year, in proportion to their share of the EU cereals production. 
+
+## Simulation scenarios
+
+As input data for our model, we used the cereals production, reserves and trade averaged over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
 
 ```{r load_trade_data}
 years <- c(1996, 2003, 2009)
@@ -92,7 +129,19 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 ```
 
 
+...
+
 # Results
+
+
+
+
+# References
+
+FAO (2001). Food balance sheets: A handbook.
+
+Carr, J. A., D’Odorico, P., Laio, F., & Ridolfi, L. (2013). Recent history and geography of virtual water trade. *PLoS ONE*, **8**(2): e55825.
+
 
 
 # Appendix: Simulation model details
@@ -119,7 +168,7 @@ $$ \mathcal{U} = \mathcal{U} \setminus
 At this point, countries left with a residual shock absorb a fraction of it ($f_c$) by reducing domestic consumption, leaving an amount $\Delta s''_{t,j}$ that can be transferred to other countries through trade:                 
 $$ \Delta s''_{t,j} = \left( \Delta s'_{t,j} - \Delta r_{t,j} \right)
                       \left( 1 - f_c \right) \, . $$ 
-To avoid spending a large fraction of the simulation passing tiny residual shocks, we define a fractional threshold $\alpha$ (set at 0.001%) so that countries simply absorb their residual shock when $\lvert \Delta s''_{t,j} \rvert < \alpha \, s_{t,j}$. 
+To avoid spending a large fraction of the simulation passing tiny residual shocks, we define a fractional threshold $\alpha$ so that countries simply absorb their residual shock when $\lvert \Delta s''_{t,j} \rvert < \alpha \, s_{t,j}$. 
 
 A country can transfer a shock to its trade partners by either reducing its exports or increasing its imports, i.e. by decreasing its balance of trade $b$. We set an upper bound on the magnitude of this change to be equal to the total volume $v$ on all the country's trade links, excluding any "blocked" incoming links:
 $$ v_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$ and
