@@ -11,13 +11,15 @@ bibliography: ref.bib
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(DiagrammeR)
 library(knitr)
+library(stringr)
+library(xtable)
 ```
 
 ```{r global_options, include=FALSE}
-options(digits = 3)
+options(digits = 3, xtable.comment = FALSE)
 opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+theme_set(theme_classic())
 ```
 
 ```{r load_funcs}
@@ -61,22 +63,20 @@ system("dot -Tpdf model-flow-chart.gv -o model-flow-chart.pdf")
 
 ## Data
 
-We used data from the Food and Agricultural Organization of the United Nations' online database (FAOSTAT, faostat3.fao.org) to construct the cereals production and trade data. The production and trade data for individual primary and secondary commodities in the cereals group was converted into kcal equivalents [@fao2001] and aggregated by country and year (*supplementary table to be added later*). We used population data from FAOSTAT to subset the network so that only countries with a population exceeding half a million people during the period 1986-2011. We rectified the data as described in @carr2013 to account for the merging and fracturing of countries between years.
+We use data from the Food and Agricultural Organization of the United Nations' online database (FAOSTAT, faostat3.fao.org) to construct the cereals production and trade data. The production and trade data for individual primary and secondary commodities in the cereals group is converted into kcal equivalents [@fao2001] and aggregated by country and year (*supplementary table to be added later*). We use population data from FAOSTAT to subset the network so that only countries with a population exceeding half a million people during the period 1986-2011. We rectify the data as described in @carr2013 to account for the merging and fracturing of countries between years.
 
-We obtained data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, milled rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we chose to apportion these reserves between EU countries for each year, in proportion to their share of the EU cereals production. 
+We obtain data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, milled rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we apportion these reserves between EU countries for each year in proportion to their share of the EU cereals production. 
 
-## Simulation scenarios
+For input to our model, we average the cereals production, reserves and trade over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
 
-As input data for our model, we used the cereals production, reserves and trade averaged over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The evolution of the cereals trade across these three time periods show a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production.
-
-```{r load_trade_data}
+```{r load_trade_data, results = "asis"}
 years <- c(1996, 2003, 2009)
 trade_dat <- lapply(years, get_trade_data, mov_avg = 2,
                     prod_trade_file = "data/cereals_prod_trade.RData", 
                     stocks_file = "data/cereals_stocks.RData")
 names(trade_dat) <- years
 trade_st <- bind_rows(lapply(trade_dat, get_trade_stats_sum), .id = "year")
-kable(trade_st, 
+kable(trade_st,
       col.names = c("year", "$\\sum p$ (kcal)", "$\\sum r$ (kcal)", 
                     "# trade links", "$\\sum F$ (kcal)",  
                     "$\\sum r / \\sum p$", "$\\sum F / \\sum p$"),
@@ -84,7 +84,7 @@ kable(trade_st,
                       "for each time period considered in our analysis"))
 ```
 
-To separate the effects of changes in reserves and trade flows in our results, we performed two different scalings of the 1996 and 2003 reserves: in the $r$-scaled version, all countries' reserves are scaled by a common factor so that the ratio of total $r$ to total $p$ matches that of 2009; in the $r/s$-scaled version, the reserves are set individually in each country so that the fraction of $r$ to net supply $s$ matches the 2009 data. Compared with the original data, simulation results from these scaled versions allow us to identify the impact of changes in total reserves or in the distribution of these reserves between countries, respectively.
+To separate the effects of changes in reserves and trade flows in our results, we perform two different scalings of the 1996 and 2003 reserves: in the $r$-scaled version, all countries' reserves are scaled by a common factor so that the ratio of total $r$ to total $p$ matches that of 2009; in the $r/s$-scaled version, the reserves are set individually in each country so that the fraction of $r$ to net supply $s$ matches the 2009 data. Compared with the original data, simulation results from these scaled versions allow us to identify the impact of changes in total reserves or in the distribution of these reserves between countries, respectively.
 
 ```{r r_scaling}
 Rscale <- trade_st$RP_ratio / trade_st$RP_ratio[trade_st$year == "2009"]
@@ -103,7 +103,9 @@ trade_RSscaled <- Map(
     }, trade_dat, S0)
 ```
 
-We define a model run as a set that includes one simulation starting from each country for each of the three years. In addition to the input data (original, $r$-scaled or $r/s$-scaled version), we set three global parameters by model run: the initial shock magnitude as a fraction of the target country's production ($f_p$), the fraction of reserves that are available to absorb a shock ($f_r$), as well as the fraction of a shock absorbed by consumption after reserves are depleted ($f_c$, as defined in our model above). In practice, $f_r < 1$ may reflect the fact that some of the reported reserves are already committed to trade or that countries are unwilling to let reserves drop below some floor amount. 
+## Simulation parameters and response variables
+
+For the purpose of this study, each model run performs one simulation starting from each country, using a specific year of data and a specific scaling of the reserves (see above). We also set three global parameters by model run: the initial shock magnitude as a fraction of the target country's production ($f_p$), the fraction of reserves that are available to absorb a shock ($f_r$), as well as the fraction of a shock absorbed by consumption after reserves are depleted ($f_c$, as defined in our model above). In practice, $f_r < 1$ may reflect the fact that some of the reported reserves are already committed to trade or that countries are unwilling to let reserves drop below some floor amount. 
 
 ```{r run_sims}
 get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
@@ -113,7 +115,7 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
     trade_stats <- bind_rows(lapply(trade_data, get_trade_stats_by_cty),
                              .id = "year") 
     sim_stats <- bind_rows(lapply(st, get_sim_stats_by_cty))
-    cbind(trade_stats, sim_stats)
+    cbind(fp = pfrac, fr = rfrac, fc = cfrac, trade_stats, sim_stats)
 }
 
 #stats_by_cty <- bind_rows(
@@ -122,25 +124,139 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 #    "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
 #    "01_025"   = get_multiyear_sim_results(trade_dat, 0.1, 0.25, 0.01),
 #    "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
-#    "015_05"    = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
+#    "015_05"   = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
 #    "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
 #    "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
 #    .id = "params")
+
+#stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
+#                    tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
+
+# Params groups
+Rscal <- c("02_05", "Rscaled", "RSscaled")
+Cfrac <- c("02_05", "02_05_005", "02_05_01")
+PR <- c("01_025", "015_05", "02_05", "03_1")
+
+#saveRDS(stats_by_cty, "stats_by_cty.RData")
+stats_by_cty <- readRDS("stats_by_cty.RData")
+
 ```
 
+For each model run, we report the number of simulations where the initial shock was transmitted ($n_s$), i.e. excluding those where the target country has no production or has available reserves that exceed the loss of production. We calculate the following summary metrics per country (pc): the number of *hits*, or simulations where the country receives a shock ($h_{(pc)}$); the number of hits where domestic consumption is affected ($h_{c (pc)}$); a scaled measure of the change in net supply ($\Delta s_{(pc)}$) and consumption ($\Delta c_{(pc)}$) over all simulations; and the evenness ($J$) of impact across simulations (see below).
 
-...
+To better compare the relative impacts across countries and model runs, $\Delta s_{(pc)}$ and $\Delta c_{(pc)}$ are scaled by the country's initial supply ($s_0$) and the relative magnitude of the initial shock $f_p$, i.e.
+$$\Delta s_{(pc)} = \frac{\sum_k \Delta s_k}{f_p s_0} \; \text{and} \; 
+  \Delta c_{(pc)} = \frac{\sum_k \Delta c_k}{f_p s_0} \, ,$$
+where the sum is taken over simulations in the same run.
+
+Based on Pielou's measure of community evenness in ecology, $J$ is calculated as:
+$$ J = - \frac{1}{\log n_c} \sum_k \Delta p_k \log \Delta p_k \, ,$$
+where $n_c$ is the number of countries and $p_k$ is the proportion of the total $\Delta s$ affecting the focal country that is due to a shock starting at country $k$. The sum is over all $k$ where $p_k > 0$. When all the impact comes from a single simulation, $J = 0$; if it is due equally to shocks originating from all countries, $J = 1$. 
+
 
 # Results
 
+## Global parameters and network-wide effects
+
+In Table \ref{tab:pars_stat}, we explore the effect of the model's global parameters on the simulation outputs for the most recent (2009) network. Between the first two rows, both $f_p$ and $f_r$ are doubled so that the ratio of shock intensity to initial reserves remains constant. This leaves most impact metrics unaffected, except for the mean $\Delta c_{(pc)}$, which nearly doubles. In this scenario, even if countries have larger available reserves, their trade flows remain the same and may limit the amount of residual shock that can be passed along, resulting in a greater impact on consumption. The same effect would explain the decrease in evenness $J$ between the two cases. Predictably, raising $f_c$ (third and fouth rows) monotonically increases the mean $\Delta c_{(pc)}$ while leaving other statistics unchanged.
+
+```{r tab_pars_stat, results = "asis"}
+hits_summ <- stats_by_cty %>%
+    filter(params %in% c(Cfrac, PR), year == 2009) %>%
+    group_by(params) %>%
+    summarise(fp = mean(fp), fr = mean(fr), fc = mean(fc),
+              nshocks = sum(self_dC_scl < 0), 
+              hits_m = mean(hits), hits_sd = sd(hits),
+              mean_tot_dS = mean(tot_dS_scl), sd_tot_dS = sd(tot_dS_scl),
+              mean_even = mean(even), sd_even = sd(even),
+              hitsC = mean(hitsC), mean_tot_dC = mean(tot_dC_scl)) %>%
+    select(-params) %>% arrange(desc(nshocks))
+
+titlerow <- list(pos = list(0, 0),
+    command = c(paste("$f_p$ & $f_r$ & $f_c$ & $n_s$ &",
+                      "\\multicolumn{2}{c}{$h_{(pc)}$} &", 
+                      "\\multicolumn{2}{c}{$\\Delta s_{(pc)}$} &",
+                      "\\multicolumn{2}{c}{$J$} & $h_{c (pc)}$ &",
+                      "$\\Delta c_{(pc)}$ \\\\\n"),
+                paste("& & & & mean & s.d. & mean & s.d. &",
+                      "mean & s.d. & & \\\\\n")))
+pars_stat <- xtable(hits_summ, label = "tab:pars_stat",
+    caption = "Effect of global parameters on output statistics (2009 data)",
+    align = "lrrr|rrrrrrrrr")
+print(pars_stat, add.to.row = titlerow, caption.placement = "top",
+      include.rownames = FALSE, include.colnames = FALSE, 
+      hline.after = c(-1, 0, 2, 4, 6))
+```
+
+Compared to the first two cases, the last two rows represent a 50% increase in shock intensity and a doubling of reserves. As more countries can absorb a shock through their reserves, the number of simulations where a shock is passed ($n_s$), as well as the mean number of hits ($h$ and $h_{c}$) by country all decrease. As a larger portion of the shock is absorbed by the initial target, $J$ also decreases.
+
+Based on model runs with a fixed set of global parameters, the most recent trade network (2009) appears to have a greater capacity to absorb shocks compared with those of 1996 and 2003, as evidenced by smaller mean values of $h_{(pc)}$, $h_{c (pc)}$ and $\Delta c_{(pc)}$ (Table \ref{tab:Rscal_stat}). However, this pattern is largely driven by the distribution of reserves rather than increased trade. Despite the total reserves being greater in 1996 and 2003 -- which explains why the impact metrics are even higher when scaling these total reserves to 2009 levels -- they are less evenly distributed, with a few countries (such as China) holding a very large proportion of their net supply in reserve and more countries having no reserves at all. By scaling relative reserves by country to their 2009 values ($r/s$-scaling), we see that the number of hits by country monotonically increases over time, with a small increase in the mean evenness of the impact across simulations, all factors consistent with an increase of the number and volume of trade connections.
+
+```{r tab_Rscal_stat, results = "asis"}
+hits_summ_Rscal <- stats_by_cty %>%
+    filter(params %in% c(Rscal), year != 2009 | params == "02_05") %>%
+    group_by(params, year) %>%
+    summarise(nshocks = sum(self_dC_scl < 0), 
+              hits_m = mean(hits), hits_sd = sd(hits),
+              mean_tot_dS = mean(tot_dS_scl), sd_tot_dS = sd(tot_dS_scl),
+              mean_even = mean(even), sd_even = sd(even),
+              hitsC = mean(hitsC), mean_tot_dC = mean(tot_dC_scl)) %>%
+    ungroup %>% select(-params, -year)
+
+rownames(hits_summ_Rscal) <- c("1996 (original)", "2003 (original)",
+                               "2009 (original)", "1996 ($r$-scaled)",
+                               "2003 ($r$-scaled)", "1996 ($r/s$-scaled)",
+                               "2003 ($r/s$-scaled)")
+titlerow <- list(pos = list(0, 0),
+    command = c(paste("year (version) & $n_s$ &",
+                      "\\multicolumn{2}{c}{$h_{(pc)}$} &", 
+                      "\\multicolumn{2}{c}{$\\Delta s_{(pc)}$} &",
+                      "\\multicolumn{2}{c}{$J$} & $h_{c (pc)}$ &",
+                      "$\\Delta c_{(pc)}$ \\\\\n"),
+                paste("& & mean & s.d. & mean & s.d. &",
+                      "mean & s.d. & & \\\\\n")))
+Rscal_stat <- xtable(hits_summ_Rscal, label = "tab:Rscal_stat",
+    caption = paste("Summary statistics by input data version",
+                    "($f_p$ = 0.2, $f_r$ = 0.5, $f_c$ = 0.01)"),
+    align = "l|rrrrrrrrr")
+print(Rscal_stat, add.to.row = titlerow, caption.placement = "top",
+      include.colnames = FALSE, hline.after = c(-1, 0, 3, 5, 7),
+      sanitize.rownames.function = function(x) {x})
+
+```
 
 
+While the previous tables do not indicate the standard deviations for $h_{c (pc)}$ and $\Delta c_{(pc)}$, their distribution is highly skewed with most countries receiving little to no impact on their consumption. As such, we focus on the most impacted country in the next section. 
 
-# References
+## Country-level impacts
 
-FAO (2001). Food balance sheets: A handbook.
+Note: for hitsC separate R0_S0 == 0 and others
+probably need to separate self vs. other-inflicted dC
 
-Carr, J. A., D’Odorico, P., Laio, F., & Ridolfi, L. (2013). Recent history and geography of virtual water trade. *PLoS ONE*, **8**(2): e55825.
+look at large ext_dC_S0 hits e.g. 02_05 in 2009
+
+
+#```{r dC_tables}
+
+stats_by_cty <- mutate(stats_by_cty, ext_dC_scl = tot_dC_scl - self_dC_scl)
+
+hitsC_summ <- stats_by_cty %>%
+    filter(params %in% c(Cfrac, PR), year == 2009) %>%
+    group_by(params) %>% 
+    summarise(self_hits = sum(self_dC_scl < 0), 
+              ext_hits = sum(ext_dC_scl < 0),
+              mean_lselfdC = mean(log(-self_dC_scl[self_dC_scl < 0])),
+              sd_lselfdC = sd(log(-self_dC_scl[self_dC_scl < 0])),
+              mean_lextdC = mean(log(-ext_dC_scl[ext_dC_scl < 0])),
+              sd_lextdC = sd(log(-ext_dC_scl[ext_dC_scl < 0]))) 
+
+ggplot(data = filter(stats_by_cty, tot_dC_scl - self_dC_scl < 0),
+       aes(x = params, y = log(-tot_dC_scl + self_dC_scl), fill = year)) + geom_boxplot()
+
+ggplot(data = filter(stats_by_cty, self_dC_scl < 0),
+       aes(x = params, y = log(-self_dC_scl), fill = year)) + geom_boxplot()
+
+#```
 
 
 
@@ -190,3 +306,5 @@ The new shock received by each country at the next iteration equal to any increa
 $$ \Delta s'_{t+1,j} = \sum_k \Delta F_{t,kj} - \sum_k \Delta F_{t,jk} 
                       + \Delta b_{t,j} \, ,$$
 where the last term serves to remove the effect of the country's own actions. When $\Delta s'_{t+1, j} = 0$ for all $j$, all shocks have been absorbed internally and the simulation ends.
+
+# References

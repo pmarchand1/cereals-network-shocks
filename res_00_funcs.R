@@ -35,12 +35,21 @@ evenness <- function(x) {
     - sum(x[x > 0] * log(x[x > 0])) / log(length(x))
 }
 
+# Utility function to get self_dC vector from dC matrix
+get_dC_self <- function(dC) {
+    vapply(rownames(dC), function(cty) {
+        if (cty %in% colnames(dC)) dC[cty, cty]
+        else 0
+    }, 0)
+}
+
 # Get a few summary statistics by country from the output of get_stat_allc function
 get_sim_stats_by_cty <-  function(stat_list) {
     data_frame(hits = stat_list$hits_by_cty,
                links_hit = stat_list$avg_links_hit_by_cty,
                hitsC = rowSums(stat_list$dCrel != 0),
                tot_dC_S0 = rowSums(stat_list$dC_S0),
+               self_dC_S0 = get_dC_self(stat_list$dC_S0),
                tot_dS_S0 = rowSums(stat_list$dS_S0),
                even = apply(stat_list$dS_S0, 1, evenness))
 }
