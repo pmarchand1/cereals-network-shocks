@@ -1,5 +1,5 @@
 ---
-title: "Cascading shocks in the cereals trade network"
+title: "Shifting risks in increasingly globalized food trade networks"
 date: "12/12/2015"
 output: 
     pdf_document:
@@ -11,15 +11,17 @@ bibliography: ref.bib
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(igraph)
 library(knitr)
 library(stringr)
 library(xtable)
+library(cowplot)
 ```
 
 ```{r global_options, include=FALSE}
 options(digits = 3, xtable.comment = FALSE)
 opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
-theme_set(theme_classic())
+theme_set(theme_cowplot())
 ```
 
 ```{r load_funcs}
@@ -147,18 +149,18 @@ For each model run, we report the number of simulations where the initial shock 
 To better compare the relative impacts across countries and model runs, $\Delta s_{(pc)}$ and $\Delta c_{(pc)}$ are scaled by the country's initial supply ($s_0$) and the relative magnitude of the initial shock $f_p$, i.e.
 $$\Delta s_{(pc)} = \frac{\sum_k \Delta s_k}{f_p s_0} \; \text{and} \; 
   \Delta c_{(pc)} = \frac{\sum_k \Delta c_k}{f_p s_0} \, ,$$
-where the sum is taken over simulations in the same run.
+where the sum is taken over simulations in the same run. These metrics are always negative and we focus on their magnitude in the text, e.g. a greater "shock" or "impact" referring to a more negative value.
 
 Based on Pielou's measure of community evenness in ecology, $J$ is calculated as:
-$$ J = - \frac{1}{\log n_c} \sum_k \Delta p_k \log \Delta p_k \, ,$$
-where $n_c$ is the number of countries and $p_k$ is the proportion of the total $\Delta s$ affecting the focal country that is due to a shock starting at country $k$. The sum is over all $k$ where $p_k > 0$. When all the impact comes from a single simulation, $J = 0$; if it is due equally to shocks originating from all countries, $J = 1$. 
+$$ J = - \frac{1}{\log n_c} \sum_k \pi_k \log \pi_k \, ,$$
+where $n_c$ is the number of countries and $\pi_k$ is the proportion of the total $\Delta s$ affecting the focal country that is due to a shock starting at country $k$. The sum is over all $k$ where $\pi_k > 0$. When all the impact comes from a single simulation, $J = 0$; if it is due equally to shocks originating from all countries, $J = 1$. 
 
 
 # Results
 
 ## Global parameters and network-wide effects
 
-In Table \ref{tab:pars_stat}, we explore the effect of the model's global parameters on the simulation outputs for the most recent (2009) network. Between the first two rows, both $f_p$ and $f_r$ are doubled so that the ratio of shock intensity to initial reserves remains constant. This leaves most impact metrics unaffected, except for the mean $\Delta c_{(pc)}$, which nearly doubles. In this scenario, even if countries have larger available reserves, their trade flows remain the same and may limit the amount of residual shock that can be passed along, resulting in a greater impact on consumption. The same effect would explain the decrease in evenness $J$ between the two cases. Predictably, raising $f_c$ (third and fouth rows) monotonically increases the mean $\Delta c_{(pc)}$ while leaving other statistics unchanged.
+In Table \ref{tab:pars_stat}, we explore the effect of the model's global parameters on the simulation outputs for the most recent (2009) network. Between the first two rows, both $f_p$ and $f_r$ are doubled so that the ratio of shock intensity to initial reserves remains constant. This leaves most impact metrics unaffected, except for the mean $\Delta c_{(pc)}$, which nearly doubles. In this scenario, even if countries have larger available reserves, their trade flows remain the same and may limit the amount of residual shock that can be passed along, resulting in a greater impact on consumption. The same effect would explain the decrease in evenness $J$ between the two cases. Predictably, raising $f_c$ (third and fouth rows) monotonically increases the magnitude of $\Delta c_{(pc)}$ while leaving other statistics unchanged.
 
 ```{r tab_pars_stat, results = "asis"}
 hits_summ <- stats_by_cty %>%
@@ -225,38 +227,183 @@ print(Rscal_stat, add.to.row = titlerow, caption.placement = "top",
 
 ```
 
+While a more even distribution of reserves lessens the average impact on domestic consumption, it increases the average relative shock felt by countries ($\Delta s_{(pc)}$). To explain this pattern, we note that this average is directly related to the covariance between $\Delta s_{(pc)}$ and the initial supply $s_0$:
 
-While the previous tables do not indicate the standard deviations for $h_{c (pc)}$ and $\Delta c_{(pc)}$, their distribution is highly skewed with most countries receiving little to no impact on their consumption. As such, we focus on the most impacted country in the next section. 
+$$\mathrm{E} \left[ \sum_k \Delta s_k \right] 
+    = \mathrm{E} \left[ \Delta s_{(pc)} \right] \mathrm{E} \left[f_p s_0 \right] 
+    + \mathrm{cov} \left( \Delta s_{(pc)}, f_p s_0 \right) \; \text{and}$$
+
+$$\mathrm{E} \left[ \Delta s_{(pc)} \right] 
+    = \frac{\mathrm{E} \left[ \sum_k \Delta s_k \right]}{f_p \mathrm{E} \left[ s_0 \right]} 
+    - \frac{1}{\mathrm{E} \left[ s_0 \right]} \mathrm{cov} \left( \Delta s_{(pc)}, s_0 \right) \, .$$
+    
+Since the mean supply equals the mean production, both the numerator and the denominator of the first term on the right-hand side are equal in magnitude to the mean initial shock over simulations:
+
+$$\mathrm{E} \left[ \Delta s_{(pc)} \right] 
+    = -1 - \frac{1}{\mathrm{E} \left[ s_0 \right]} \mathrm{cov} \left( \Delta s_{(pc)}, s_0 \right) \, .$$
+
+Thus, the observation that $\mathrm{E} \left[ \Delta s_{(pc)} \right] > -1$ for all our model runs means that countries with a larger initial supply receive a proportionally greater impact from the shocks. This can be in turn related to the structure of the cereals trade network. A few large producers account for most of the net exports and receive more shocks due to their central position in the network. These main producers also tend to have proportionately higher reserves, allowing them to absorb most of these shocks. *[Note: Perhaps we need graphs in the supplementary materials showing this?]* Once again, a large portion of the change between 1996 and 2009 can be explained by the distribution of reserves, with the residual differences (shown in the $r/s$-scaled version) reflecting the intensification of trade.
+
+Although the previous tables do not indicate the standard deviations for $h_{c (pc)}$ and $\Delta c_{(pc)}$, their distribution is highly skewed with most countries receiving little to no impact on their consumption. As such, we focus on the most impacted countries in the next section. 
 
 ## Country-level impacts
 
-Note: for hitsC separate R0_S0 == 0 and others
-probably need to separate self vs. other-inflicted dC
+map dS and dC by year (original vs. RSscaled?)
+look at dC self-hits (over time, input type)
+look at dC ext-hits (over time, input type)
 
-look at large ext_dC_S0 hits e.g. 02_05 in 2009
+```{r ds_dc_prep}
+# Load basemap
+data(wrld_simpl)
+world_df <- fortify(wrld_simpl)
+
+plot_params <- c("02_05_1996", "RSscaled_1996", "02_05_2009")
+ds_dc <- stats_by_cty %>% unite(version, params, year, sep = "_") %>%
+    filter(version %in% plot_params) %>%
+    select(id = cty, version, tot_dS_S0, tot_dC_S0)
+ds_dc$version <- factor(ds_dc$version, levels = plot_params,
+                        labels = c("1996 (original)", "1996 (r/s-scaled)", "2009"))
+world_ds_dc <- inner_join(world_df, ds_dc)
+```
+
+```{r ds_map, fig.width = 7, fig.height = 10, fig.cap = "Total impact on net supply as a fraction of initial supply by country, for three versions of the input data. Global simulation parameters set at $f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01."}
+ggplot() + geom_polygon(aes(long, lat, group = group, fill = tot_dS_S0),
+                                 data = world_ds_dc, colour = "grey", size = 0.25) +
+    scale_fill_gradient(low = "red", high = "white", na.value = "grey") +
+    labs(title = expression(sum(Delta * s / s[0])), fill = "") +
+    facet_wrap(~ version, ncol = 1) + coord_fixed() + theme_map()
+```
+
+```{r dc_map, fig.width = 7, fig.height = 10, fig.cap = "Total impact on domestic consumption as a fraction of initial supply by country, for three versions of the input data. Global simulation parameters set at $f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01."}
+ggplot() + geom_polygon(aes(long, lat, group = group, fill = tot_dC_S0),
+                                 data = world_ds_dc, colour = "grey", size = 0.25) +
+    scale_fill_gradient(low = "red", high = "white", na.value = "grey") +
+    labs(title = expression(sum(Delta * c / s[0])), fill = "") +
+    facet_wrap(~ version, ncol = 1) + coord_fixed() + theme_map()
+```
 
 
-#```{r dC_tables}
+```{r dc_stats}
+stats_dC <- stats_by_cty %>% 
+    filter(params == "02_05" | params == "RSscaled" & year %in% c("1996", "2003"), 
+           tot_dC_scl < 0) %>%
+    select(-fp, -fr, -fc, -hits, -links_hit, -tot_dS_S0, -even, -tot_dS_scl) %>%
+    mutate(ext_dC_scl = tot_dC_scl - self_dC_scl,
+           ext_dC_S0 = tot_dC_S0 - self_dC_S0) %>%
+    group_by(cty) %>%
+    filter(min(tot_dC_S0) < -0.01)
 
-stats_by_cty <- mutate(stats_by_cty, ext_dC_scl = tot_dC_scl - self_dC_scl)
+stats_dC_min <- filter(stats_dC, tot_dC_S0 < -0.01)
+stats_dC_ext <- filter(stats_dC, ext_dC_S0 < -0.01)
 
-hitsC_summ <- stats_by_cty %>%
-    filter(params %in% c(Cfrac, PR), year == 2009) %>%
-    group_by(params) %>% 
-    summarise(self_hits = sum(self_dC_scl < 0), 
-              ext_hits = sum(ext_dC_scl < 0),
-              mean_lselfdC = mean(log(-self_dC_scl[self_dC_scl < 0])),
-              sd_lselfdC = sd(log(-self_dC_scl[self_dC_scl < 0])),
-              mean_lextdC = mean(log(-ext_dC_scl[ext_dC_scl < 0])),
-              sd_lextdC = sd(log(-ext_dC_scl[ext_dC_scl < 0]))) 
+# 55 countries have no reserves at some point
+#  28 have tot_dC_S0 < -0.01, 27 don't
+no_res <- unique(stats_by_cty$cty[stats_by_cty$R0_S0 == 0])
 
-ggplot(data = filter(stats_by_cty, tot_dC_scl - self_dC_scl < 0),
-       aes(x = params, y = log(-tot_dC_scl + self_dC_scl), fill = year)) + geom_boxplot()
+# 67 countries in stats_dC_min:
+# "AFG" "BGD" "BLR" "BTN" "BGR" "BFA" "BDI" "KHM" "CAF" "TCD" 
+# "CRI" "PRK" "DOM" "SLV" "ETH" "GIN" "GNB" "HTI" "HND" "IND" 
+# "IDN" "JAM" "KAZ" "KGZ" "LAO" "LTU" "MDG" "MWI" "MLI" "MEX" 
+# "MMR" "NPL" "NER" "NGA" "PAN" "PNG" "POL" "ROU" "RUS" "SRB" 
+# "SVK" "SLB" "SUR" "TLS" "TTO" "UGA" "UKR" "TZA" "VNM" "LSO" 
+# "NIC" "PSE" "PAK" "RWA" "SOM" "TUR" "TKM" "UZB" "ARM" "COM" 
+# "GTM" "JPN" "MNG" "SGP" "SWZ" "SDN" "ZWE"
 
-ggplot(data = filter(stats_by_cty, self_dC_scl < 0),
-       aes(x = params, y = log(-self_dC_scl), fill = year)) + geom_boxplot()
+# ext and self hits >1% (6): "BTN" "CAF" "AFG" "BGD" "NPL" "PRK"
+# ext hits (21):  "CRI" "DOM" "SLV" "HTI" "HND" "JAM" "MEX" "PAN" "PNG" "SLB" "SUR" 
+#                 "TTO" "NIC" "SOM" "ARM" "COM" "GTM" "JPN" "MNG" "SGP" "ZWE" 
+```
 
-#```
+```{r dc_graphs}
+st_02_05 <- lapply(trade_dat, function(x) {
+  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+})
+
+st_RSscaled <- lapply(trade_RSscaled, function(x) {
+  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+})
+
+get_dC_tall <- function(st, countries) {
+    dC <- st$dC_S0[rownames(st$dC_S0) %in% countries, ]
+    cbind(to = rownames(dC), as.data.frame(dC)) %>%
+        gather(key = "from", value = "dC_S0", -to)
+}
+
+dC_all <- bind_rows(
+    `02_05` = bind_rows(lapply(st_02_05, get_dC_tall,
+                                countries = unique(stats_dC$cty)), .id = "year"),
+    RSscaled = bind_rows(lapply(st_RSscaled, get_dC_tall, 
+                                countries = unique(stats_dC$cty)), .id = "year"),
+    .id = "params"
+)
+
+dCext <- filter(dC_all, to %in% stats_dC_ext$cty, to != from) %>%
+    group_by(to, from) %>% filter(any(dC_S0 < -1E-3))
+dCself <- filter(dC_all, to == from) %>% 
+    select(params, year, cty = to, dC_S0) %>%
+    group_by(cty) %>% filter(any(dC_S0 < -1E-2))
+rm(dC_all)
+
+dCext$from_to <- as.factor(paste(dCext$from, dCext$to, sep = "_"))
+dCself$cty <- as.factor(dCself$cty)
+
+# dCself
+
+dCself_year <- spread(dCself, key = year, value = dC_S0)
+
+ggplot(data = dCself_year, aes(x = `1996`, y = `2009`, 
+                               group = cty, color = params)) +
+    geom_text(aes(label = cty), alpha = 0.8) +
+    scale_color_brewer(type = "qual", palette = "Dark2") +
+    geom_abline() + geom_line(color = "grey", linetype = "dotted")
+
+#dCself <- inner_join(dCself, stats_by_cty) %>%
+#    select(params, year, cty, dC_S0, R0_S0, I0_S0, E0_S0)
+
+#dCself <- mutate(dCself, dC1 = -0.2 + R0_S0 + 1.2 * I0_S0 + 0.8 * E0_S0,
+#                 ratio = dC1 / dC_S0)
+
+# dCext
+
+dCext_year <- group_by(dCext, params, year, to) %>%
+    summarise(dC_S0 = sum(dC_S0)) %>%
+    spread(key = year, value = dC_S0)
+
+ggplot(data = dCext_year, aes(x = `1996`, y = `2009`, 
+                              group = to, color = params)) +
+    geom_text(aes(label = to), alpha = 0.8) +
+    scale_color_brewer(type = "qual", palette = "Dark2") +
+    geom_abline() + geom_line(color = "grey", linetype = "dotted")
+```
+
+```{r dCext_net}
+dCext_graph <- graph_from_data_frame(
+    data_frame(from = dCext$from, to = dCext$cty, width = log(-dCext$dC_S0)+7,
+               lty = as.integer(dCext$params),
+               color = as.integer(as.factor(dCext$year)))
+)
+
+dCext_graph <- graph_from_data_frame(
+    filter(dCext, params == "02_05") %>%
+    mutate(width = log(-dC_S0) + 7, 
+           color = as.integer(as.factor(year))) %>%
+    select(from, to = cty, width, color)
+)
+
+dCext_net <- function(dCext, params, year) {
+    dCext_graph <- graph_from_data_frame(
+        filter(dCext, params == "02_05", year == "1996") %>%
+        mutate(width = log(-dC_S0) + 7) %>%
+        select(from, to = cty, width)
+    )
+    V(dCext_graph)$type <- as.integer(degree(dCext_graph, mode = "out") == 0)
+    plot(dCext_graph, edge.arrow.size = 0.02, edge.arrow.width = 2, 
+         vertex.label.cex = 0.7)
+#    plot(dCext_graph, rescale = FALSE, 
+#         edge.arrow.size = 0.02, edge.arrow.width = 2, vertex.label.cex = 0.7),
+#         layout = layout_as_bipartite(dCext_graph, hgap = 0.2, vgap = 0.5))
+}
+```
 
 
 

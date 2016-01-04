@@ -20,7 +20,7 @@ get_trade_stats_sum <- function(trade_data) {
 get_trade_stats_by_cty <- function(trade_data) {
     tgraph <- graph_from_adjacency_matrix(trade_data$E0 != 0, mode = "directed")
     S0 <- trade_data$P0 + colSums(trade_data$E0) - rowSums(trade_data$E0)
-    data.frame(cty = names(trade_data$P0), 
+    data.frame(cty = names(trade_data$P0), S0 = S0,
                R0_S0 = trade_data$R0 / S0, 
                I0_S0 = colSums(trade_data$E0) / S0,
                E0_S0 = rowSums(trade_data$E0) / S0,
@@ -62,7 +62,7 @@ stat_cty_map <- function(df, stat, year = NA, params = NA,
                          low = "red", high = "white", div = FALSE) {
     select_expr <- rep(TRUE, nrow(df))
     if (!is.na(year)) select_expr <- select_expr & df$year == year
-    if (!is.na(params)) select_exptr <- select_expr & df$params == params
+    if (!is.na(params)) select_expr <- select_expr & df$params == params
     stat_select <- df[select_expr, stat]
     names(stat_select) <- df[select_expr, "cty"]
     world_df <- add_country_data(world_df, stat_select)

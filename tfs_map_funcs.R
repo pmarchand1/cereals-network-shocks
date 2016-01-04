@@ -18,8 +18,7 @@ pts_by_gc <- 100
 theme_map <- function(base_size = 12, base_family = "Helvetica") {
     theme_bw(base_size = base_size, base_family = base_family) %+replace%
         theme(rect = element_blank(), line = element_blank(),
-              axis.text = element_blank(), axis.title = element_blank(),
-              axis.ticks.margin = unit(0, "lines"))
+              axis.text = element_blank(), axis.title = element_blank())
 }
 
 
