@@ -3,13 +3,14 @@
 
 # Get summary stats from trade data (i.e. output of get_trade_data function)
 get_trade_stats_sum <- function(trade_data) {
+    nc <- length(trade_data$P0)
     Ptot <- sum(trade_data$P0)
     Rtot <- sum(trade_data$R0)
     nlinks <- sum(trade_data$E0 > 0)
     totflow <- sum(trade_data$E0)
     RP_ratio <- Rtot / Ptot
     flowP_ratio <- totflow / Ptot
-    data.frame(Ptot = Ptot, Rtot = Rtot, nlinks = nlinks, totflow = totflow,
+    data.frame(nc = nc, Ptot = Ptot, Rtot = Rtot, nlinks = nlinks, totflow = totflow,
                RP_ratio = RP_ratio, flowP_ratio = flowP_ratio)
 }
 
