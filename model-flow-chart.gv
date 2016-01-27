@@ -7,7 +7,7 @@ digraph sim_model {
     C [shape = ellipse, label = <Are reserves depleted?>]
     D [label = <Block outgoing trade flows>]
     E [label = <Reduce <I>C</I> by fraction <I>f<SUB>c</SUB></I> of res. shock>]
-    F [shape = ellipse, label = <Is res. shock less than &alpha; * <I>s</I>?>]
+    F [shape = ellipse, label = <Is res. shock less than &alpha; * <I>S</I>?>]
     G [label = <Reduce <I>E</I> and increase <I>I</I> on all unblocked <BR/> links, prop. to current volume on link>]
     H [label = <Reduce <I>C</I> to absorb any res. shock>]
     I [label = <Update <I>R</I>, <I>C</I>, <I>S</I> and <I>F</I> at iteration <I>t+1</I>>]
