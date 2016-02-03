@@ -1,0 +1,212 @@
+---
+title: "Supplementary Data - Reserves and trade jointly determine exposure to food supply shocks"
+output:
+  pdf_document:
+    fig_caption: yes
+---
+
+```{r load_packages, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(igraph)
+library(knitr)
+library(stringr)
+library(xtable)
+library(cowplot)
+library(FAOSTAT)
+```
+
+```{r global_options, include=FALSE}
+options(digits = 3, xtable.comment = FALSE)
+opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r load_funcs}
+source("tfs_cascade_funcs.R")
+source("tfs_map_funcs.R")
+source("res_00_funcs.R")
+```
+
+# Simulation model details
+
+In our model, we define the annual net supply (or simply "supply") $S_j$ of a food commodity in country $j$ as:
+$$S_j = P_j + I_j - E_j \, ,$$ 
+where $P$ is production, $I$ is imports and $E$ is exports. The difference between this supply and domestic consumption $C$ must result in a change in the country's reserves $R$, so that: 
+$$S_j = C_j + \Delta R_j \, .$$ 
+Note that this convention differs from the FAO's definition of domestic supply, which includes a term representing transfer *from* the reserves, whereas a positive $\Delta R$ in our case represents a transfer *to* the reserves. 
+
+We initialize the model with realistic production, trade and reserves data and assume that the initial consumption equals supply, i.e. $\Delta R = 0$ before any shock. The trade data is represented by a matrix $F$ where $F_{jk}$ is the volume of exports from country $j$ to country $k$. 
+
+In the first iteration of the model ($t$ = 1), a supply shock is initiated from a drop in production:
+$$ \Delta S'_{1,j} = \Delta P_{j} \, ,$$
+where $\Delta P_{j} = 0$ for all but one or a few countries. In the following iterations, $\Delta S'$ is caused by a decrease in imports or an increase in exports as the shock is propagated through trade. The prime ($'$) notation is used to distinguish different temporary values of the shock within a single iteration. 
+
+At the start of an iteration, all countries receiving a new shock (from any source) first attempt to absorb it through their reserves:
+$$ \Delta R_{t,j} = \max \left( \Delta S'_{t,j}, -R_{t,j} \right) \, . $$ 
+
+Any country that has depleted its reserves (or had none to begin with) will block any increase in its outgoing trade and is thus removed from the set $\mathcal{U}$, which initially includes all countries.
+$$ \mathcal{U} = \mathcal{U} \setminus 
+    \left\{ j \mid \Delta S'_{t,j} < -R_{t,j} \right\} \, . $$
+    
+At this point, countries left with a residual shock absorb a fraction of it ($f_c$) by reducing domestic consumption, leaving an amount $\Delta S''_{t,j}$ that can be transferred to other countries through trade:                 
+$$ \Delta S''_{t,j} = \left( \Delta S'_{t,j} - \Delta R_{t,j} \right)
+                      \left( 1 - f_c \right) \, . $$ 
+To avoid spending a large fraction of the simulation time passing tiny residual shocks, we define a fractional threshold $\alpha$ so that countries simply absorb their residual shock when $\lvert \Delta S''_{t,j} \rvert < \alpha \, S_{t,j}$. 
+
+A country can transfer a shock to its trade partners by either reducing its exports or increasing its imports, i.e. by decreasing its balance of trade $B$. We set an upper bound on the magnitude of this change to be equal to the total volume $V$ on all the country's trade links, excluding any "blocked" incoming links:
+$$ V_{t,j} = \sum_k F_{t,jk} + \sum_k F_{t,kj} \, \mathbf{1}_{\mathcal{U}}(k)$$ and
+$$ \Delta B_{t,j} = \max \left( \Delta S''_{t,j}, -V_{t,j} \right) \, ,$$ 
+where $\mathbf{1}_{\mathcal{U}}(k)$ equals 1 if $k$ is in $\mathcal{U}$ and 0 otherwise.  
+
+Each country then changes the trade volume on each unblocked link (- if outgoing, + if incoming) proportionally to the current volume on that link. From this, we can calculate the change of any element of the trade matrix as:
+$$ \Delta F_{t,jk} = \left[ \left( \frac{\Delta B_{t,j}}{ V_{t,j}} \right)  
+                          - \mathbf{1}_{\mathcal{U}}(j) 
+                            \left( \frac{\Delta B_{t,k}}{ V_{t,k}} \right)
+                            \right] F_{t,jk} \, .$$
+
+Finally, any portion of the initial shock not absorbed by reserves or passed through trade results in a decrease in consumption:
+$$ \Delta C_{t,j} = \Delta S'_{t,j} - \Delta R_{t,j} - \Delta B_{t,j} \, .$$
+
+To start the next iteration, we update the vectors $R$, $C$ and $S$ as well as the trade matrix $F$ based on the computed $\Delta$. Note that the actual change in $S$ for a given country only depends on the fraction of the shock that was absorbed internally:
+$$ \Delta S_{t,j} = \Delta R_{t,j} + \Delta C_{t,j} \, .$$
+The new shock received by each country at the next iteration equals the sum of all increases in exports or decreases in imports due to other countries' actions at this iteration, i.e.:
+$$ \Delta S'_{t+1,j} = \sum_k \Delta F_{t,kj} - \sum_k \Delta F_{t,jk} 
+                      + \Delta B_{t,j} \, ,$$
+where the last term serves to remove the effect of the country's own actions. When $\Delta S'_{t+1, j} = 0$ for all $j$, all shocks have been absorbed internally and the simulation ends.
+
+# Supplementary tables and figures
+
+```{r tab:crop_list, results = "asis"}
+crop_list <- read.delim("data/crop_list.tsv", stringsAsFactors = FALSE) %>%
+    filter(Group == "1 - CEREALS AND CEREAL PRODUCTS") %>%
+    select(cropid, cropname, ProductionL, kcal.ton) %>%
+    mutate(ProductionL = as.logical(ProductionL), 
+           kcal.ton = as.numeric(kcal.ton)*1E-6)
+
+colnames(crop_list) <- c("FAOSTAT item code", "Crop name", 
+                         "Primary?", "Conversion factor ($10^6$ kcal/ton)")
+
+print(xtable(crop_list, label = "tab:crop_list", digits = 2,
+             caption = paste("List of cereal commodities from FAOSTAT and their calorie",
+                             "content (based on FAO 2001). The aggregate production",
+                             "data includes only primary commodities whereas the",
+                             "trade data includes all commodities. Trade figures for",
+                             "total rice - milled equivalent (code 30) were treated as", 
+                             "milled rice (code 31). \\newline")), 
+      caption.placement = "top", include.rownames = FALSE,
+      sanitize.colnames.function = function(x) {x}, scalebox = 0.8)
+```
+
+```{r fbs_prep, results = "hide"}
+country_list <- read.csv("data/country_list.csv", stringsAsFactors = FALSE)
+yr_range <- 1994:2011
+
+# Get food balance and pop. data from FAOSTAT
+#  domain BC and item 2905 correspond to the commodity balance for cereals (excl. beer)
+#  domain OA and item 3010 correspond to the annual total population by country
+foodbal <- getFAOtoSYB(name = c("dR", "Waste", "Proc", "Food", "Other", "S", 
+                                 "P", "Feed", "Seed", "I", "E", "pop"),
+                       elementCode = c("5071", "5120", "5130", "5141", "5153",
+                         "5300", "5510", "5520", "5525", "5610", "5910", "511"),
+                       domainCode = c(rep("BC", 11), "OA"),
+                       itemCode = c(rep("2905", 11), "3010"),
+                       yearRange = yr_range, countrySet = country_list$FAOST_CODE,
+                       useCHMT = FALSE, outputFormat = "long")
+foodbal <- select(foodbal$entity, -domainCode, -itemCode, -elementCode) %>%
+    spread(key = name, value = Value)
+
+# Only keep countries with maxpop >500k and P > 0 each year
+has_prod <- group_by(foodbal, FAOST_CODE) %>%
+    summarise(has_prod = all(P > 0))
+cty_keep <- intersect(country_list$FAOST_CODE[country_list$gt.500k],
+                      has_prod$FAOST_CODE[has_prod$has_prod])
+foodbal <- filter(foodbal, FAOST_CODE %in% cty_keep)
+
+# Get values per capita and annual differences
+#  Note the change of sign for dR
+cereals_percap <- foodbal %>%
+    transmute(cty = FAOST_CODE, year = Year, P = P / pop, dR = -dR / pop, 
+              E = E / pop, I = I / pop, S = S / pop, food = Food / pop,
+              feed = Feed / pop, seed = Seed / pop, proc = Proc / pop,
+              waste = Waste / pop, other = Other / pop) %>%
+    group_by(cty) %>% arrange(cty, year)
+
+cereals_percap <- mutate(cereals_percap, dP = P - lag(P), ddR = dR - lag(dR), 
+                         dE = E - lag(E), dI = I - lag(I), dS = S - lag(S),
+                         dfood = food - lag(food), dfeed = feed - lag(feed),
+                         dseed = seed - lag(seed), dproc = proc - lag(proc), 
+                         dwaste = waste - lag(waste), dother = other - lag(other))
+```
+
+```{r tab:dP_reg, results = "asis"}
+# Shock when dP/P < -0.1
+cereals_shock <- mutate(cereals_percap, dPrel = dP / lag(P)) %>%
+    filter(dPrel < -0.1)
+
+# Get regression coefs and R^2 values for all food balance items vs. dP
+get_dP_reg <- function(var, df) {
+    linm <- lm(df[[var]] ~ df[["dP"]])
+    c(b = coefficients(linm)[2], 
+      rsq = summary(linm)$adj.r.squared,
+      sd = sd(linm$residuals))
+}
+vars <- c("ddR", "dE", "dI", "dfood", "dfeed",
+          "dseed", "dproc", "dwaste", "dother")
+dP_fit <- cbind(
+    t(vapply(vars, get_dP_reg, df = cereals_percap, rep(0, 3))),
+    t(shock_fit <- vapply(vars, get_dP_reg, df = cereals_shock, rep(0, 3)))
+)
+
+rownames(dP_fit) <- c("$\\Delta(\\Delta R)$", "$\\Delta E$", "$\\Delta I$", 
+                      "$\\Delta C_{food}$", "$\\Delta C_{feed}$", "$\\Delta C_{seed}$",
+                      "$\\Delta C_{process}$", "$\\Delta C_{waste}$", "$\\Delta C_{other}$")
+
+titlerow <- list(pos = list(0, 0),
+    command = c(paste("& \\multicolumn{3}{c}{All data} &",
+                      "\\multicolumn{3}{c}{$\\Delta P < -0.1$} \\\\\n"),
+                paste("& $\\beta$ & $R^2$ & $\\sigma_{res}$ &",
+                      "$\\beta$ & $R^2$ & $\\sigma_{res}$ \\\\\n")))
+dP_reg <- xtable(as.data.frame(dP_fit), label = "tab:dP_reg", align = c("l|rrr|rrr"),
+    caption = paste("Regression slope ($\\beta$), adjusted $R^2$, and residual standard",
+                    "deviation ($\\sigma_{res}$) for the effect of the interannual $\\Delta P$",
+                    "on each other component of the FAO food balance sheets (FBS)",
+                    "for cereals and cereal products, extracted by country and year and",
+                    "expressed on a per capita basis. We used the FBS data from 1994 to 2011",
+                    "for the 153 countries that reported cereals production for each year in this",
+                    "period and reached a population of at least 500,000. The right-hand side",
+                    "results are based on a subset of the country-years where per capita",
+                    "production fell by over 10\\%. \\newline"))
+
+print(dP_reg, add.to.row = titlerow, caption.placement = "top", 
+      include.colnames = FALSE, hline.after = c(-1, 0, 9),
+      sanitize.rownames.function = function(x) {x})
+
+```
+
+```{r stats_vs_S, fig.width = 4, fig.height = 8, fig.cap = "\\label{fig:stats_vs_S} (a) $R$/$S$ ratio and (b) network degree (total number of incoming and outgoing links) as a function of $\\log S$ for the 2009 network. Labels identify (via their ISO alpha-3 codes) the top 10% exporters, responsible for ~86% of total exports."}
+
+trade_dat <- get_trade_data(2009, prod_trade_file = "data/cereals_prod_trade.RData", 
+                            stocks_file = "data/cereals_stocks.RData", mov_avg = 2)
+trade_by_cty <- get_trade_stats_by_cty(trade_dat)
+
+trade_10pct <- filter(trade_by_cty, percent_rank(E0_S0 * S0) >= 0.9)
+
+p1 <- ggplot(data = trade_by_cty, aes(x = log(S0), y = R0_S0)) +
+    labs(x = "", y = "R/S") +
+    geom_point(alpha = 0.5) + 
+    geom_point(data = trade_10pct) +
+    geom_smooth(method = "lm", se = FALSE) +
+    geom_text(data = trade_10pct, aes(label = cty), size = 3, 
+              nudge_x = 0.6, nudge_y = 0.012)
+
+p2 <- ggplot(data = trade_by_cty, aes(x = log(S0), y = outdeg + indeg)) +
+    labs(x = "log S", y = "degree") +
+    geom_point(alpha = 0.5) + 
+    geom_point(data = trade_10pct) + 
+    geom_smooth(method = "lm", se = FALSE) +
+    geom_text(data = trade_10pct, aes(label = cty), size = 3,  
+              nudge_x = 0.6, nudge_y = 5)
+
+plot_grid(p1, p2, labels = c("a", "b"), ncol = 1)
+```
