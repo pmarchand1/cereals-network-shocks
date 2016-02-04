@@ -11,6 +11,7 @@ csl: institute-of-physics-harvard.csl
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(maptools)
 library(igraph)
 library(knitr)
 library(stringr)
@@ -25,8 +26,7 @@ opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
 ```{r load_funcs}
-source("tfs_cascade_funcs.R")
-source("tfs_map_funcs.R")
+source("cereals-network-funcs.R")
 source("res_00_funcs.R")
 ```
 
@@ -344,6 +344,14 @@ Although the previous tables do not indicate the standard deviations for the con
 # Load basemap
 data(wrld_simpl)
 world_df <- fortify(wrld_simpl)
+
+# ggplot theme for mapping
+theme_map <- function(base_size = 12, base_family = "Helvetica") {
+    theme_bw(base_size = base_size, base_family = base_family) %+replace%
+        theme(rect = element_blank(), line = element_blank(),
+              axis.text = element_blank(), axis.title = element_blank())
+}
+
 
 plot_params <- c("02_05_1996", "RSscaled_1996", "02_05_2009")
 ds_dc <- stats_by_cty %>% unite(version, params, year, sep = "_") %>%
