@@ -30,15 +30,43 @@ source("tfs_map_funcs.R")
 source("res_00_funcs.R")
 ```
 
+Philippe Marchand$^1$, Joel A. Carr$^2$, Jampel Dell'Angelo$^1$, Marianela Fader$^3$, Jessica A. Gephart$^2$, Matti Kummu$^4$, Nicholas R. Magliocca$^1$, Miina Porkka$^4$, Michael J. Puma$^5$, Zak Ratajczak$^2$, Maria Cristina Rulli$^6$, David A. Seekell$^7$, Samir Suweis$^8$, Alessandro Tavoni$^9$, Paolo D'Odorico$^{1,2}$
+
+$^1$ National Socio-Environmental Synthesis Center (SESYNC), Annapolis, MD 21401, USA
+
+$^2$ Department of Environmental Sciences, University of Virginia, Charlottesville, VA 22904, USA
+
+$^3$Institut Méditerranéen de Biodiversité et d’Ecologie Marine et Continentale (IMBE), F-13545 Aix-en-Provence cedex 04, France
+
+$^4$Water and Development Research Group (WDRG), Aalto University, FI-00076 Aalto, Finland
+
+$^5$Columbia University Center for Climate Systems Research, NASA Goddard Institute for Space Studies, New York, NY 10025, USA
+
+$^6$Department of Hydraulics, Roadways, Environmental and Surveying Engineering, Politecnico di Milano, Milan I-20133, Italy
+
+$^7$Department of Ecology and Environmental Science, Umeå University, SE-901 87 Umeå, Sweden
+
+$^8$Department of Physics and Astronomy, University of Padova, 35131 Padova, Italy
+
+$^9$Grantham Research Institute on Climate Change and the Environment, London School of Economics, London WC2A 2AE, UK
+
+\newpage
+
+# Abstract
+
+While a growing proportion of global food consumption is obtained through international trade, there is an ongoing debate on whether this increased reliance on trade benefits or hinders food security, and specifically, the ability of global food systems to absorb shocks due to local or regional losses of production. This paper introduces a model that simulates the short-term response to a food supply shock, which is partly absorbed through domestic reserves and consumption, and partly transmitted through the adjustment of trade flows. By applying the model to publicly-available data for the cereals commodity group over a 17-year period, we find that differential outcomes of supply shocks over time are driven not only by the intensification of trade, but as importantly by changes in the distribution of reserves. Our analysis also identifies countries where trade dependency creates a substantial risk of food shortages following a shock; such risk could be reduced by increasing domestic reserves or importing food from a diversity of suppliers that possess their own reserves. This simulation-based model provides a framework to study the short-term, non-linear and out-of-equilibrium response of trade networks to supply shocks, and could be applied to specific scenarios of environmental or economic perturbations.
+
+\newpage
+
 # Introduction
 
-Country-scale food availability depends on domestic production, reserves, and trade. About 24% of the food that is consumed worldwide is available through international trade [e.g., @dodorico2014]; likewise, 24% of the global agricultural land [@weinzettel2013] and 23% of the freshwater resources used for food production [@dodorico2013] are accessed through trade. Trade dependency has substantially increased in the last few decades and more than doubled since the mid-1980s [@porkka2013; @dodorico2014] likely as a result of liberalization and the associated removal of subsidies and trade protections in developing countries [e.g., @shafaeddin2005]. The impact of neoliberal reforms on trade, economic development and food security has been the focus of an intense debate on whether it favors technological and economic advancement or trade dependency in the developing world [@schanbacher2010; @oliveira2016]. It has been argued that it may allow for an influx of cheap subsidized food commodities from more developed countries, thereby displacing smallholder farmers, undermining rural livelihoods, and enhancing trade dependency in the global south [@shafaeddin2005; @deschutter2014; @godar2015].
+Country-scale food availability depends on domestic production, reserves, and trade. About 24% of the food that is consumed worldwide is available through international trade [e.g., @dodorico2014]; likewise, 24% of the global agricultural land [@weinzettel2013] and 23% of the freshwater resources used for food production [@dodorico2013] are accessed through trade. Trade dependency has substantially increased in the last few decades and more than doubled since the mid-1980s [@porkka2013; @dodorico2014] likely as a result of liberalization and the associated removal of subsidies and trade protections in developing countries [e.g., @shafaeddin2005]. While international food trade increases the variety of food products available to customers and helps buffer the impact of local supply shocks (e.g., crop failures), the effect of recent neoliberal reforms on trade, economic development and food security in the developing world is the subject of a vigorous debate [@schanbacher2010; @oliveira2016]. It has been argued that it may allow for an influx of cheap subsidized food commodities from more developed countries, thereby displacing smallholder farmers, undermining rural livelihoods, and enhancing trade dependency in the global south [@shafaeddin2005; @deschutter2014; @godar2015], as some countries increasingly rely on resources they do not control [e.g., @carr2013; @suweis2013].
 
 Recent studies have stressed the environmental implications of food trade in terms of loss of environmental stewardship resulting from the tele-coupling between agricultural production and consumer behavior or market volatility [@defries2010; @schmitz2012; @meyfroidt2013]. Other studies hint at the emergence of patterns of ecological unequal exchange, whereby an unbalanced distribution and flow of resources and environmental impacts perpetuates conditions of uneven economic development around the world [e.g., @rice2007; @martinez2014]. In particular, the globalization of food through trade has been associated with the exportation and externalization of environmental impacts [@galloway2007; @obannon2014], virtual water and land trade [@hoekstra2008; @fader2011], and the overall geographic disconnection between consumers and the environment that supports them [@carr2013; @macdonald2015].
 
-While the economic and environmental impacts of food trade are discussed in the literature, the joint effects of economic and environmental changes on the resilience of the global food system remain poorly understood [@dodorico2010; @prakash2011; @fader2013; @suweis2015]. Even though trade may alleviate conditions of food deficit in resource poor regions, it allows for the emergence of dependency whereby some countries increasingly rely on resources they do not control [e.g., @carr2013; @suweis2013]. In conditions of food crisis, prices dramatically increase, leaving the poor with no or limited access to food [e.g., @deschutter2014]. Moreover, during the recent food crises (e.g., in 2008 and 2011) the governments of exporting countries have responded to food price spikes by banning food exports, thereby leaving trade dependent countries in a state of insecurity [e.g., @fader2013; @puma2015]. Export bans increase the uncertainty and unreliability of the global food markets, thereby eroding food security in trade-dependent countries. 
+In contrast with the number of studies on the economic and environmental impacts of food trade, the joint effects of economic and environmental changes on the resilience of the global food system, i.e., its capacity to meet food demand in spite of supply shocks, remain poorly understood [@dodorico2010; @prakash2011; @fader2013; @suweis2015]. In conditions of food crisis, prices dramatically increase, leaving the poor with no or limited access to food [e.g., @deschutter2014]. Moreover, during the recent food crises (e.g., in 2008 and 2011) the governments of exporting countries have responded to food price spikes by banning food exports, thereby leaving trade dependent countries in a state of insecurity [e.g., @fader2013; @puma2015]. Export bans increase the uncertainty and unreliability of the global food markets, thereby eroding food security in trade-dependent countries. 
 
-The effect of the intensification of trade on food security, however, is difficult to evaluate, particularly the short term response of food systems to shocks in production (e.g., due to crop failure) and the way such a response propagates through the global trade network. These effects are hardly captured by state-of the art economic models accounting for changes in supply and price fluctuations. In fact, such models typically assume (general or partial) equilibrium and market-clearing conditions [e.g., @hatfield2013] that are unlikely attained in the course of a food crisis when hoarding and speculations occur while consumers scramble and suppliers make short-term arrangements [@piesse2009; @headey2011; @jones2015]. A shock to production induces a short-term out-of-equilibrium condition in which shortfalls in food supply are addressed through either local adjustments or trade relationships. From a mass balance point of view, this shock may be partly absorbed at the country level by tapping on reserves or reducing domestic consumption, and partly transmitted to other countries as affected regions decrease their exports or increase their imports. The outcome of these processes cannot be predicted through a linear stability/reactivity analysis [e.g., @suweis2015], as large perturbations cause non-linear responses (such as threshold effects) and the system may not recover to its original state.
+The impact of the intensification of trade on food security is difficult to evaluate, particularly the short term response of food systems to shocks in production and the way such a response propagates through the global trade network. These effects are hardly captured by state-of the art economic models accounting for changes in supply and price fluctuations. In fact, such models typically assume (general or partial) equilibrium and market-clearing conditions [e.g., @hatfield2013] that are unlikely attained in the course of a food crisis when hoarding and speculations occur while consumers scramble and suppliers make short-term arrangements [@piesse2009; @headey2011; @jones2015]. A shock to production induces a short-term out-of-equilibrium condition in which shortfalls in food supply are addressed through either local adjustments or trade relationships. From a mass balance point of view, this shock may be partly absorbed at the country level by tapping on reserves or reducing domestic consumption, and partly transmitted to other countries as affected regions decrease their exports or increase their imports. The outcome of these processes cannot be predicted through a linear stability/reactivity analysis [e.g., @suweis2015], as large perturbations cause non-linear responses (such as threshold effects) and the system may not recover to its original state.
 
 In this study, we develop a model that simulates the propagation of a food supply shock through the processes described above (changes in reserves, trade and consumption) while preserving mass balance at the country level. We share this approach with other "cascading shock" models applied to specific food commodities [@puma2015; @gephart2016], virtual water [@tamea2016], industrial sectors linked by input-output relationships [@contreras2014] and aggregate economic production [@lee2011]. Our model differs from previous work by its inclusion of food reserves, which empirical research has shown may play a major role in the resilience of food systems [@fraser2015].
 
@@ -93,9 +121,9 @@ The assumption that production shocks are absorbed first by reserves is supporte
 
 We initialize our model with historical data on the international trade in cereals. As a major component of global food trade and food stocks, cereals provide a natural starting point to study how food security is impacted by the distribution of trade flows and reserves. By focusing our analysis on a commodity group rather than a single commodity, we avoid the need to consider substitution effects between functionally-similar crops in that group.
 
-We use the cereals production and trade data from the Food and Agricultural Organization of the United Nations' online database (FAOSTAT, faostat3.fao.org). Production and trade quantities for individual primary and secondary commodities in the cereals group are converted into kcal equivalents [@fao2001] and aggregated by country and year (see Supplementary Table 1 for the list of included crops and conversion factors). We use population data from FAOSTAT to subset the network so that only countries with a population exceeding half a million people during the period 1986-2011 are considered. We rectify the data as described in @carr2013 to account for the merging and splitting of countries between years.
+We use the cereals production and trade data from the Food and Agricultural Organization of the United Nations' online database (FAOSTAT, faostat3.fao.org, data acquired in January 2016). Production and trade quantities for individual primary and secondary commodities in the cereals group are converted into kcal equivalents [@fao2001] and aggregated by country and year (see Supplementary Table 1 for the list of included crops and conversion factors). We use population data from FAOSTAT to subset the network so that only countries with a population exceeding half a million people during the period 1986-2011 are considered. We rectify the data as described in @carr2013 to account for the merging and splitting of countries between years.
 
-We obtain data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. While the USDA-PSD data does not include some minor crops covered by FAOSTAT (including buckwheat, fonio and quinoa), those nine commodities account for over 90% of the total grain production reported by FAOSTAT over the 25-year period. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we divide these reserves between EU countries for each year in proportion to their share of the EU cereals production.
+We obtain data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/, data acquired in October 2015). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. While the USDA-PSD data does not include some minor crops covered by FAOSTAT (including buckwheat, fonio and quinoa), those nine commodities account for over 90% of the total grain production reported by FAOSTAT over the 25-year period. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we divide these reserves between EU countries for each year in proportion to their share of the EU cereals production.
 
 ```{r load_trade_data, results = "asis"}
 years <- c(1996, 2003, 2009)
@@ -159,14 +187,14 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 #    "Rscaled"  = get_multiyear_sim_results(trade_Rscaled, 0.2, 0.5, 0.01),
 #    "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
 #    "01_025"   = get_multiyear_sim_results(trade_dat, 0.1, 0.25, 0.01),
-#    "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
-#    "015_05"   = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
-#    "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
-#    "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
-#    .id = "params")
-
-#stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
-#                    tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
+#     "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
+#     "015_05"   = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
+#     "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
+#     "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
+#     .id = "params")
+# 
+# stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
+#                     tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
 
 # Params groups
 Rscal <- c("02_05", "Rscaled", "RSscaled")
@@ -216,7 +244,7 @@ Note that terms with $\pi_{kj} = 0$ are excluded from the sum in eq. (\ref{eq:ev
 
 ## Model implementation
 
-We performed the simulations and all data processing steps in R [@r2015], using the FAOSTAT package [@kao2015] to facilitate data acquisition from the FAOSTAT database. The necessary code to reproduce all results in this paper can be found at: *GitHub link to be added*.
+We performed the simulations and all data processing steps in R [@r2015], using the FAOSTAT package [@kao2015] to facilitate data acquisition from the FAOSTAT database. The necessary code to reproduce all results in this paper is available on GitHub (http://github.com/pmarchand1/cereals-network-shocks).
 
 
 # Results
@@ -378,13 +406,13 @@ no_res <- unique(stats_by_cty$cty[stats_by_cty$R0_S0 == 0])
 ```
 
 ```{r dc_prep}
-#st_02_05 <- lapply(trade_dat, function(x) {
-#  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
-#})
-
-#st_RSscaled <- lapply(trade_RSscaled, function(x) {
-#  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
-#})
+# st_02_05 <- lapply(trade_dat, function(x) {
+#   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+# })
+# 
+# st_RSscaled <- lapply(trade_RSscaled, function(x) {
+#   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+# })
 
 get_dC_tall <- function(st, countries) {
     dC <- st$dC_S0[rownames(st$dC_S0) %in% countries, ]
@@ -392,13 +420,13 @@ get_dC_tall <- function(st, countries) {
         gather(key = "from", value = "dC_S0", -to)
 }
 
-#dC_all <- bind_rows(
-#    `02_05` = bind_rows(lapply(st_02_05, get_dC_tall,
-#                                countries = unique(stats_dC$cty)), .id = "year"),
-#    RSscaled = bind_rows(lapply(st_RSscaled, get_dC_tall, 
-#                                countries = unique(stats_dC$cty)), .id = "year"),
-#    .id = "params"
-#)
+# dC_all <- bind_rows(
+#     `02_05` = bind_rows(lapply(st_02_05, get_dC_tall,
+#                                 countries = unique(stats_dC$cty)), .id = "year"),
+#     RSscaled = bind_rows(lapply(st_RSscaled, get_dC_tall, 
+#                                 countries = unique(stats_dC$cty)), .id = "year"),
+#     .id = "params"
+# )
 
 #saveRDS(dC_all, "dC_all.RData")
 dC_all <- readRDS("dC_all.RData")
@@ -492,6 +520,7 @@ By shedding light on the complex interactions that determine the link between tr
 
 # Acknowledgments
 
-This work was supported by the National Socio-Environmental Synthesis Center (SESYNC) under funding received from the National Science Foundation grant DBI-1052875.
+This work was supported by the National Socio-Environmental Synthesis Center (SESYNC) under funding received from the National Science Foundation grant DBI-1052875. We thank Roberto Patricio Korzeniewicz and Christina Prell for their participation in early discussions on this project.
+
 
 # References
