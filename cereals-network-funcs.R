@@ -2,7 +2,6 @@
 
 library(igraph) # for network metrics
 
-
 # Function to load input data for the simulation model
 #  based on the structure of .RData files in data/fao_networks
 # Also requires "ciso3.txt" in working directory to map ISO3 country codes
@@ -144,6 +143,7 @@ sim_cascade <- function(dP, P0, R0, E0, cfrac = 0, asym = TRUE,
     }
 }
 
+
 # Function to calculate the relative change in each trade link
 #  from the proportion of trade volume (by country) affected by shock (prop_dT)
 #  ana a logical vector indicating shocked countries (that an't export any more)
@@ -156,6 +156,7 @@ dEalloc <- function(prop_dT, shocked) {
     diag(dEprop) <- 0
     dEprop
 }
+
 
 # This function takes the output of sim_cascade (or sim_1c)
 #  and tests whether it respects equation: S = P + I - E = R + C
@@ -182,6 +183,7 @@ sim_diagnostics <- function(sim_res, tol = 1E-5) {
     return("All tests passed.")
 }
 
+
 # Runs a sim_cascade starting with country c_init losing a fraction a_init of P
 sim_1c <- function(c_init, a_init, P0, R0, E0, cfrac = 0, asym = TRUE,
                    kmax = 50, amin = 1E-5, anim_out = FALSE) {
@@ -198,6 +200,7 @@ sim_1c <- function(c_init, a_init, P0, R0, E0, cfrac = 0, asym = TRUE,
     dP[c_init] <- -a_init * P0[c_init]
     sim_cascade(dP, P0, R0, E0, cfrac, asym, kmax, amin, anim_out)
 }
+
 
 # Runs sim_1c for each country represented in input data where P0 > 0
 # The list it returns is similar to that of sim_cascade, except that
@@ -277,4 +280,57 @@ get_stats_allc <- function(sim_res_multi) {
          avg_links_hit_by_cty = avg_links_hit_by_cty,
          avg_dSrel_by_cty_rank = avg_dSrel_by_cty_rank, 
          avg_dS_S0_by_sim_rank = avg_dS_S0_by_sim_rank)
+}
+
+
+# Get summary stats from trade data (i.e. output of get_trade_data function)
+get_trade_stats_sum <- function(trade_data) {
+    nc <- length(trade_data$P0)
+    Ptot <- sum(trade_data$P0)
+    Rtot <- sum(trade_data$R0)
+    nlinks <- sum(trade_data$E0 > 0)
+    totflow <- sum(trade_data$E0)
+    RP_ratio <- Rtot / Ptot
+    flowP_ratio <- totflow / Ptot
+    data.frame(nc = nc, Ptot = Ptot, Rtot = Rtot, nlinks = nlinks, totflow = totflow,
+               RP_ratio = RP_ratio, flowP_ratio = flowP_ratio)
+}
+
+
+# Get derived stats by country from trade data (output of get_trade_data function)
+get_trade_stats_by_cty <- function(trade_data) {
+    tgraph <- graph_from_adjacency_matrix(trade_data$E0 != 0, mode = "directed")
+    S0 <- trade_data$P0 + colSums(trade_data$E0) - rowSums(trade_data$E0)
+    data.frame(cty = names(trade_data$P0), S0 = S0,
+               R0_S0 = trade_data$R0 / S0, 
+               I0_S0 = colSums(trade_data$E0) / S0,
+               E0_S0 = rowSums(trade_data$E0) / S0,
+               indeg = degree(tgraph, mode = "in"),
+               outdeg = degree(tgraph, mode = "out"))
+}
+
+
+# Utility function to compute Pielou evenness of a vector
+evenness <- function(x) {
+    x <- x / sum(x)
+    - sum(x[x > 0] * log(x[x > 0])) / log(length(x))
+}
+
+# Utility function to get self_dC vector from dC matrix
+get_dC_self <- function(dC) {
+    vapply(rownames(dC), function(cty) {
+        if (cty %in% colnames(dC)) dC[cty, cty]
+        else 0
+    }, 0)
+}
+
+# Get a few summary statistics by country from the output of get_stat_allc function
+get_sim_stats_by_cty <-  function(stat_list) {
+    data_frame(hits = stat_list$hits_by_cty,
+               links_hit = stat_list$avg_links_hit_by_cty,
+               hitsC = rowSums(stat_list$dCrel != 0),
+               tot_dC_S0 = rowSums(stat_list$dC_S0),
+               self_dC_S0 = get_dC_self(stat_list$dC_S0),
+               tot_dS_S0 = rowSums(stat_list$dS_S0),
+               even = apply(stat_list$dS_S0, 1, evenness))
 }

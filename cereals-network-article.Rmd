@@ -7,7 +7,7 @@ bibliography: ref.bib
 csl: institute-of-physics-harvard.csl
 ---
 
-```{r load_packages, include=FALSE}
+```{r load_packages_funcs, include=FALSE}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -18,16 +18,12 @@ library(stringr)
 library(xtable)
 library(cowplot)
 library(FAOSTAT)
+source("cereals-network-funcs.R")
 ```
 
 ```{r global_options, include=FALSE}
 options(digits = 3, xtable.comment = FALSE)
 opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
-```
-
-```{r load_funcs}
-source("cereals-network-funcs.R")
-source("res_00_funcs.R")
 ```
 
 Philippe Marchand$^1$, Joel A. Carr$^2$, Jampel Dell'Angelo$^1$, Marianela Fader$^3$, Jessica A. Gephart$^2$, Matti Kummu$^4$, Nicholas R. Magliocca$^1$, Miina Porkka$^4$, Michael J. Puma$^5$, Zak Ratajczak$^2$, Maria Cristina Rulli$^6$, David A. Seekell$^7$, Samir Suweis$^8$, Alessandro Tavoni$^9$, Paolo D'Odorico$^{1,2}$
@@ -109,10 +105,6 @@ print(xtable(var_list, label = "tab:var_list",
       sanitize.text.function = function(x) {x})
 ```
 
-```{r flow_chart}
-#system("dot -Tpdf model-flow-chart.gv -o model-flow-chart.pdf")
-```
-
 ![Simulation model flow chart. See Table \ref{tab:var_list} for a list of variables.\label{fig:sim_chart}](model-flow-chart.pdf)
 
 The assumption that production shocks are absorbed first by reserves is supported by the FAO commodity balance data, showing that interannual changes in cereals production ($\Delta P$) are most closely associated with changes in $R$. In contrast, all components of $C$, except animal feed, show little interannual variation and little to no association with $\Delta P$ (see Supplementary Table 2). Both $E$ and $I$ are more variable than $C$ over time, but these changes are mostly uncorrelated with $\Delta P$, as trade dynamics are affected by other factors than immediate changes in production. We further discuss these assumptions and alternatives at the end of the paper.
@@ -182,7 +174,7 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
     cbind(fp = pfrac, fr = rfrac, fc = cfrac, trade_stats, sim_stats)
 }
 
-#stats_by_cty <- bind_rows(
+# stats_by_cty <- bind_rows(
 #    "02_05"    = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.01),
 #    "Rscaled"  = get_multiyear_sim_results(trade_Rscaled, 0.2, 0.5, 0.01),
 #    "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
@@ -201,7 +193,7 @@ Rscal <- c("02_05", "Rscaled", "RSscaled")
 Cfrac <- c("02_05", "02_05_005", "02_05_01")
 PR <- c("01_025", "015_05", "02_05", "03_1")
 
-#saveRDS(stats_by_cty, "stats_by_cty.RData")
+# saveRDS(stats_by_cty, "stats_by_cty.RData")
 stats_by_cty <- readRDS("stats_by_cty.RData")
 
 ```
@@ -352,7 +344,6 @@ theme_map <- function(base_size = 12, base_family = "Helvetica") {
               axis.text = element_blank(), axis.title = element_blank())
 }
 
-
 plot_params <- c("02_05_1996", "RSscaled_1996", "02_05_2009")
 ds_dc <- stats_by_cty %>% unite(version, params, year, sep = "_") %>%
     filter(version %in% plot_params) %>%
@@ -382,7 +373,7 @@ Figures \ref{fig:ds_map} and \ref{fig:dc_map} present the total impact on the su
 
 Countries where the simulated shocks produce substantial decreases in domestic consumption are concentrated in a few regions: Central America, the Sahel and East Africa, South and South-East Asia and (in 1996 only) the former Soviet Union (Fig. \ref{fig:dc_map}). Compared with the original 1996 data, simulations using the $R/S$-scaled reserves led to smaller impacts to consumption overall. Changes in the trade network itself greatly reduced the $\Delta C$ impact on many countries, including most of the former Soviet Union, Afghanistan, Sudan and Tanzania, but led to larger impacts in others, notably in Central America. 
 
-```{r dc_stats}
+```{r dc_prep}
 stats_dC <- stats_by_cty %>% 
     filter(params == "02_05" | params == "RSscaled" & year %in% c("1996", "2003"), 
            tot_dC_scl < 0) %>%
@@ -392,28 +383,8 @@ stats_dC <- stats_by_cty %>%
     group_by(cty) %>%
     filter(min(tot_dC_S0) < -0.01)
 
-stats_dC_min <- filter(stats_dC, tot_dC_S0 < -0.01)
 stats_dC_ext <- filter(stats_dC, ext_dC_S0 < -0.01)
 
-# 55 countries have no reserves at some point
-#  28 have tot_dC_S0 < -0.01, 27 don't
-no_res <- unique(stats_by_cty$cty[stats_by_cty$R0_S0 == 0])
-
-# 67 countries in stats_dC_min:
-# "AFG" "BGD" "BLR" "BTN" "BGR" "BFA" "BDI" "KHM" "CAF" "TCD" 
-# "CRI" "PRK" "DOM" "SLV" "ETH" "GIN" "GNB" "HTI" "HND" "IND" 
-# "IDN" "JAM" "KAZ" "KGZ" "LAO" "LTU" "MDG" "MWI" "MLI" "MEX" 
-# "MMR" "NPL" "NER" "NGA" "PAN" "PNG" "POL" "ROU" "RUS" "SRB" 
-# "SVK" "SLB" "SUR" "TLS" "TTO" "UGA" "UKR" "TZA" "VNM" "LSO" 
-# "NIC" "PSE" "PAK" "RWA" "SOM" "TUR" "TKM" "UZB" "ARM" "COM" 
-# "GTM" "JPN" "MNG" "SGP" "SWZ" "SDN" "ZWE"
-
-# ext and self hits >1% (6): "BTN" "CAF" "AFG" "BGD" "NPL" "PRK"
-# ext hits (21):  "CRI" "DOM" "SLV" "HTI" "HND" "JAM" "MEX" "PAN" "PNG" "SLB" "SUR" 
-#                 "TTO" "NIC" "SOM" "ARM" "COM" "GTM" "JPN" "MNG" "SGP" "ZWE" 
-```
-
-```{r dc_prep}
 # st_02_05 <- lapply(trade_dat, function(x) {
 #   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
 # })
@@ -421,6 +392,7 @@ no_res <- unique(stats_by_cty$cty[stats_by_cty$R0_S0 == 0])
 # st_RSscaled <- lapply(trade_RSscaled, function(x) {
 #   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
 # })
+
 
 get_dC_tall <- function(st, countries) {
     dC <- st$dC_S0[rownames(st$dC_S0) %in% countries, ]
@@ -436,7 +408,7 @@ get_dC_tall <- function(st, countries) {
 #     .id = "params"
 # )
 
-#saveRDS(dC_all, "dC_all.RData")
+# saveRDS(dC_all, "dC_all.RData")
 dC_all <- readRDS("dC_all.RData")
 
 dCext <- dC_all %>%
@@ -490,8 +462,6 @@ We can gain additional insights on these results by separating the share of $\De
 
 Conversely, a majority of the 24 countries receiving a substantial (>1% of $S_0$) external shock are more impacted under the 2009 trade network (Fig. \ref{fig:dc_self_ext}(b)), reflecting an increased reliance on food imports from one or a few trade partners. A look at the specific external shocks causing these $\Delta C$ show that they originate from nine source countries (Fig. \ref{fig:dCext_net}), with 14 of these shocks -- including the four greatest in magnitude -- caused by an initial production drop in the United States. While the other target countries in the graph experience this risk from one or two simulations, the $\Delta C$ in Singapore is spread over five sources; it also has the lowest aggregate $\Delta C$, only slightly above the 1% threshold.
 
-Contrasting with the overall trend towards a more globalized food trade network, our results show that the vulnerabilities to external shocks occur mostly at a regional scale, with American, South Asian / Indian Ocean and East Asian clusters clearly visible in Fig. \ref{fig:dCext_net} (the link from the United States to Japan being a notable exception).
-
 ```{r dCext_net, results = "hide"}
 #```{r dCext_net, fig.width = 6, fig.height = 6, fig.cap = "\\label{fig:dCext_net}Graph of countries (in blue) having to reduce consumption for a shock initiated at source countries (in orange). The width of each edge is proportional to $\\log \\Delta C / S_0$. Simulations initialized with 2009 input data and global parameters $f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01. Country labels correspond to their ISO alpha-3 codes."}
 dCext_graph <- graph_from_data_frame(
@@ -509,6 +479,10 @@ plot(dCext_graph, vertex.label.color = "black",
 dev.off()
 ```
 ![Graph of countries having to reduce consumption for a shock initiated at source countries (orange nodes). The width of each edge is proportional to $\log \Delta C / S_0$. Simulations initialized with 2009 input data and global parameters (see Table \ref{tab:var_list}) are set at $f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01. \label{fig:dCext_net}](fig_dCext_net.png)
+
+Contrasting with the overall trend towards a more globalized food trade network, our results show that the vulnerabilities to external shocks occur mostly at a regional scale, with American, South Asian / Indian Ocean and East Asian clusters clearly visible in Fig. \ref{fig:dCext_net} (the link from the United States to Japan being a notable exception).
+
+\newpage
 
 
 # Discussion and conclusion
@@ -528,7 +502,7 @@ By shedding light on the complex interactions that determine the link between tr
 
 # Acknowledgments
 
-This work was supported by the National Socio-Environmental Synthesis Center (SESYNC) under funding received from the National Science Foundation grant DBI-1052875. We thank Roberto Patricio Korzeniewicz and Christina Prell for their participation in early discussions on this project.
+We thank Roberto Patricio Korzeniewicz and Christina Prell for their participation in early discussions on this project. This work was supported by the National Socio-Environmental Synthesis Center (SESYNC) under funding received from the National Science Foundation grant DBI-1052875. M.J. Puma is supported by a fellowship from the Columbia University Center for Climate and Life and the Interdisciplinary Global Change Research under NASA cooperative agreement NNX08AJ75A, and D.A. Seekell was supported by the Carl Trygger Foundation for Scientific Research.
 
 
 # References
