@@ -5,6 +5,7 @@ output:
     fig_caption: yes
 bibliography: ref.bib
 csl: institute-of-physics-harvard.csl
+linestretch: 1.5
 ---
 
 ```{r load_packages_funcs, include=FALSE}
@@ -153,8 +154,6 @@ trade_RSscaled <- Map(
         dat
     }, trade_dat, S0)
 ```
-
-\newpage
 
 To separate the effects of changes in reserves and trade flows on model outcomes, we perform two different scalings of the 1996 and 2003 reserves: (1) in the $R$-scaled version, all countries' reserves are scaled by a common factor so that the ratio of global $R$ to global $P$ matches that of 2009 (e.g., from the table above, the global $R/P$ ratio is 0.262 in 1996 and 0.192 in 2009, so the 1996 $R$-scaling would multiply each country's reserves by 0.192/0.262); (2) in the $R/S$-scaled version, each country's reserves are adjusted so that the ratio of $R$ to the net supply $S$ matches that of 2009 for that country (e.g., the $R/S$ ratio for Australia in 2009 is 0.435, so its actual 1996 reserves would be replaced with 0.435 times its 1996 supply). Comparison between simulations based on the original data and results from these scaled versions allow us to identify the impact of (1) changes in global reserves or (2) changes in the distribution of these reserves among countries, respectively. 
 
@@ -489,7 +488,7 @@ Contrasting with the overall trend towards a more globalized food trade network,
 
 In this study, we presented a dynamic simulation model that complements previous approaches aimed at understanding the effect of increasingly globalized trade networks on the resilience of national food supply systems. Initialized with historical food production and trade data, the model describes how a local production shock is propagated as countries use their reserves and trade links to buffer the loss in food supply. 
 
-Based on data for a specific commodity group - cereals and cereal products - spanning a 17-year period from 1994 to 2011, we identified two global trends affecting the model's dynamics: an increase in both the number and volume of trade links (relative to production), but also a decrease and a more even distribution of global reserves (still relative to production). This latter point is particularly relevant to the ongoing discussion on the importance of food stocks [@fraser2015], as our results suggest that the distribution of reserves matters more than their aggregate quantity in terms of conferring resilience to shocks. Trade and reserves also interact: as more countries have the reserves to absorb production losses or the capacity to import more from countries with such reserves, both trends contribute to reducing the number and severity of cases where a local drop in production forces a decrease in domestic consumption. However, a greater reliance on imports increases the risk of critical food supply losses following a foreign shock, notably in the case of several Central American and Caribbean countries that import grains from the United States. 
+Based on data for a specific commodity group -- cereals and cereal products -- spanning a 17-year period from 1994 to 2011, we identified two global trends affecting the model's dynamics: an increase in both the number and volume of trade links (relative to production), but also a decrease and a more even distribution of global reserves (still relative to production). This latter point is particularly relevant to the ongoing discussion on the importance of food stocks [@fraser2015], as our results suggest that the distribution of reserves matters more than their aggregate quantity in terms of conferring resilience to shocks. Trade and reserves also interact: as more countries have the reserves to absorb production losses or the capacity to import more from countries with such reserves, both trends contribute to reducing the number and severity of cases where a local drop in production forces a decrease in domestic consumption. However, a greater reliance on imports increases the risk of critical food supply losses following a foreign shock, notably in the case of several Central American and Caribbean countries that import grains from the United States. 
 
 Our analysis indicates that the countries most at risk of food shortages from external shocks tend to be concentrated in regional blocks. This risk would be compounded in cases where the production shock is not limited to a single country (as was modelled here) but instead jointly affects multiple countries in a region (as could be the case for environmental and weather-related events).
 
