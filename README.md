@@ -29,3 +29,8 @@ This directory contains the R/RMarkdown code and associated files necessary to r
 - Visualization: `ggplot2`, `maptools`, `cowplot`
 - LaTeX/PDF generation: `knitr`, `stringr`
 - Others: `igraph`, `FAOSTAT`
+
+
+# Acknowledgments
+
+This work was supported by the National Socio-Environmental Synthesis Center (SESYNC) under funding received from the National Science Foundation DBI-1052875.
