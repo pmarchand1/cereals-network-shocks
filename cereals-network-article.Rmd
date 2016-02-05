@@ -182,20 +182,19 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 
 # Generate all the simulation results needed for the article
 #  and merge in a single data frame with "params" column identifying model run
+stats_by_cty <- bind_rows(
+   "02_05"    = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.01),
+   "Rscaled"  = get_multiyear_sim_results(trade_Rscaled, 0.2, 0.5, 0.01),
+   "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
+   "01_025"   = get_multiyear_sim_results(trade_dat, 0.1, 0.25, 0.01),
+    "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
+    "015_05"   = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
+    "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
+    "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
+    .id = "params")
 
-# stats_by_cty <- bind_rows(
-#    "02_05"    = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.01),
-#    "Rscaled"  = get_multiyear_sim_results(trade_Rscaled, 0.2, 0.5, 0.01),
-#    "RSscaled" = get_multiyear_sim_results(trade_RSscaled, 0.2, 0.5, 0.01),
-#    "01_025"   = get_multiyear_sim_results(trade_dat, 0.1, 0.25, 0.01),
-#     "03_1"     = get_multiyear_sim_results(trade_dat, 0.3, 1, 0.01),
-#     "015_05"   = get_multiyear_sim_results(trade_dat, 0.15, 0.5, 0.01),   
-#     "02_05_005"= get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.05),
-#     "02_05_01" = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.1),    
-#     .id = "params")
-# 
-# stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
-#                     tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
+stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
+                    tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
 
 # Split model runs into three groups
 Rscal <- c("02_05", "Rscaled", "RSscaled")  # effect of reserves scaling
@@ -203,8 +202,8 @@ Cfrac <- c("02_05", "02_05_005", "02_05_01") # effect of fc parameter
 PR <- c("01_025", "015_05", "02_05", "03_1")  # effect of fp, fr parameters
 
 # Save simulation output to avoid regenerating each time article is compiled
-# saveRDS(stats_by_cty, "stats_by_cty.RData")
-stats_by_cty <- readRDS("stats_by_cty.RData")
+saveRDS(stats_by_cty, "stats_by_cty.RData")
+#stats_by_cty <- readRDS("stats_by_cty.RData")
 
 ```
 
@@ -403,13 +402,13 @@ stats_dC <- stats_by_cty %>%
 stats_dC_ext <- filter(stats_dC, ext_dC_S0 < -0.01)
 
 # Run simulations to extract detailed info on changes in consumption
-# st_02_05 <- lapply(trade_dat, function(x) {
-#   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
-# })
-# 
-# st_RSscaled <- lapply(trade_RSscaled, function(x) {
-#   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
-# })
+st_02_05 <- lapply(trade_dat, function(x) {
+  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+})
+
+st_RSscaled <- lapply(trade_RSscaled, function(x) {
+  get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
+})
 
 # Function to convert dC matrix in "tall" format (country_from, country_to, dC)
 get_dC_tall <- function(st, countries) {
@@ -418,17 +417,17 @@ get_dC_tall <- function(st, countries) {
         gather(key = "from", value = "dC_S0", -to)
 }
 
-# dC_all <- bind_rows(
-#     `02_05` = bind_rows(lapply(st_02_05, get_dC_tall,
-#                                 countries = unique(stats_dC$cty)), .id = "year"),
-#     RSscaled = bind_rows(lapply(st_RSscaled, get_dC_tall, 
-#                                 countries = unique(stats_dC$cty)), .id = "year"),
-#     .id = "params"
-# )
+dC_all <- bind_rows(
+    `02_05` = bind_rows(lapply(st_02_05, get_dC_tall,
+                                countries = unique(stats_dC$cty)), .id = "year"),
+    RSscaled = bind_rows(lapply(st_RSscaled, get_dC_tall, 
+                                countries = unique(stats_dC$cty)), .id = "year"),
+    .id = "params"
+)
 
 # Save simulation output to avoid recalculating each time article is compiled
-# saveRDS(dC_all, "dC_all.RData")
-dC_all <- readRDS("dC_all.RData")
+saveRDS(dC_all, "dC_all.RData")
+# dC_all <- readRDS("dC_all.RData")
 
 # Separate internal shocks (dCself) and external shocks (dCext) and generate graphs
 dCext <- dC_all %>%

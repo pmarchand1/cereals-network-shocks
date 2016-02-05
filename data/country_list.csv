@@ -1,0 +1,255 @@
+"Country","FAOST_CODE","max.pop","gt.500k"
+"Afghanistan",2,32358,TRUE
+"Albania",3,3292,TRUE
+"Algeria",4,35980,TRUE
+"American Samoa",5,70,FALSE
+"Andorra",6,86,FALSE
+"Angola",7,19618,TRUE
+"Anguilla",258,16,FALSE
+"Antarctica",30,0,FALSE
+"Antigua and Barbuda",8,90,FALSE
+"Argentina",9,40765,TRUE
+"Armenia",1,3450,TRUE
+"Aruba",22,108,FALSE
+"Australia",10,22606,TRUE
+"Austria",11,8413,TRUE
+"Azerbaijan",52,9306,TRUE
+"Bahamas",12,347,FALSE
+"Bahrain",13,1324,TRUE
+"Bangladesh",16,150494,TRUE
+"Barbados",14,274,FALSE
+"Belarus",57,10301,TRUE
+"Belgium",255,10754,TRUE
+"Belgium-Luxembourg",15,10579,TRUE
+"Belize",23,318,FALSE
+"Benin",53,9100,TRUE
+"Bermuda",17,65,FALSE
+"Bhutan",18,738,TRUE
+"Bolivia (Plurinational State of)",19,10088,TRUE
+"Bosnia and Herzegovina",80,3931,TRUE
+"Botswana",20,2031,TRUE
+"Bouvet Island",31,0,FALSE
+"Brazil",21,196655,TRUE
+"British Indian Ocean Territory",24,0,FALSE
+"British Virgin Islands",239,23,FALSE
+"Brunei Darussalam",26,406,FALSE
+"Bulgaria",27,8957,TRUE
+"Burkina Faso",233,16968,TRUE
+"Burundi",29,8575,TRUE
+"Cambodia",115,14305,TRUE
+"Cameroon",32,20030,TRUE
+"Canada",33,34350,TRUE
+"Canton and Enderbury Islands",34,0,FALSE
+"Cape Verde",35,501,TRUE
+"Cayman Islands",36,57,FALSE
+"Central African Republic",37,4487,TRUE
+"Chad",39,11525,TRUE
+"Channel Islands",259,153.876,FALSE
+"Chile",40,17270,TRUE
+"China",351,1378506,TRUE
+"Christmas Island",42,2.77,FALSE
+"Cocos (Keeling) Islands",43,0.635,FALSE
+"Colombia",44,46927,TRUE
+"Comoros",45,754,TRUE
+"Congo",46,4140,TRUE
+"Cook Islands",47,20,FALSE
+"Costa Rica",48,4727,TRUE
+"Côte d'Ivoire",107,20153,TRUE
+"Croatia",98,4669,TRUE
+"Cuba",49,11269,TRUE
+"Cyprus",50,1117,TRUE
+"Czech Republic",167,10534,TRUE
+"Czechoslovakia",51,15629,TRUE
+"Democratic People's Republic of Korea",116,24451,TRUE
+"Democratic Republic of the Congo",250,67758,TRUE
+"Denmark",54,5573,TRUE
+"Djibouti",72,906,TRUE
+"Dominica",55,73,FALSE
+"Dominican Republic",56,10056,TRUE
+"Ecuador",58,14666,TRUE
+"Egypt",59,82537,TRUE
+"El Salvador",60,6227,TRUE
+"Equatorial Guinea",61,720,TRUE
+"Eritrea",178,5415,TRUE
+"Estonia",63,1528,TRUE
+"Ethiopia",238,84734,TRUE
+"Ethiopia PDR",62,54914,TRUE
+"Falkland Islands (Malvinas)",65,3,FALSE
+"Faroe Islands",64,49,FALSE
+"Fiji",66,868,TRUE
+"Finland",67,5385,TRUE
+"France",68,63126,TRUE
+"French Guiana",69,237,FALSE
+"French Polynesia",70,274,FALSE
+"French Southern and Antarctic Territories",71,0,FALSE
+"Gabon",74,1534,TRUE
+"Gambia",75,1776,TRUE
+"Gaza Strip (Palestine)",76,0,FALSE
+"Georgia",73,5346,TRUE
+"Germany",79,82541,TRUE
+"Germany Fr",78,0,FALSE
+"Germany Nl",77,0,FALSE
+"Ghana",81,24966,TRUE
+"Gibraltar",82,29,FALSE
+"Greece",84,11390,TRUE
+"Greenland",85,57,FALSE
+"Grenada",86,105,FALSE
+"Guadeloupe",87,463,FALSE
+"Guam",88,182,FALSE
+"Guatemala",89,14757,TRUE
+"Guinea",90,10222,TRUE
+"Guinea-Bissau",175,1547,TRUE
+"Guyana",91,756,TRUE
+"Haiti",93,10124,TRUE
+"Holy See",94,1,FALSE
+"Honduras",95,7755,TRUE
+"Hungary",97,10503,TRUE
+"Iceland",99,324,FALSE
+"India",100,1241492,TRUE
+"Indonesia",101,242326,TRUE
+"Iran (Islamic Republic of)",102,74799,TRUE
+"Iraq",103,32665,TRUE
+"Ireland",104,4526,TRUE
+"Isle of Man",264,83.327,FALSE
+"Israel",105,7562,TRUE
+"Italy",106,60789,TRUE
+"Jamaica",109,2751,TRUE
+"Japan",110,126552,TRUE
+"Johnston Island",111,0,FALSE
+"Jordan",112,6330,TRUE
+"Kazakhstan",108,16431,TRUE
+"Kenya",114,41610,TRUE
+"Kiribati",83,101,FALSE
+"Kuwait",118,2818,TRUE
+"Kyrgyzstan",113,5393,TRUE
+"Lao People's Democratic Republic",120,6288,TRUE
+"Latvia",119,2613,TRUE
+"Lebanon",121,4259,TRUE
+"Lesotho",122,2194,TRUE
+"Liberia",123,4129,TRUE
+"Libya",124,6423,TRUE
+"Liechtenstein",125,36,FALSE
+"Lithuania",126,3690,TRUE
+"Luxembourg",256,516,TRUE
+"Madagascar",129,21315,TRUE
+"Malawi",130,15381,TRUE
+"Malaysia",131,28859,TRUE
+"Maldives",132,320,FALSE
+"Mali",133,15840,TRUE
+"Malta",134,418,FALSE
+"Marshall Islands",127,55,FALSE
+"Martinique",135,407,FALSE
+"Mauritania",136,3542,TRUE
+"Mauritius",137,1307,TRUE
+"Mayotte",270,211,FALSE
+"Mexico",138,114793,TRUE
+"Micronesia (Federated States of)",145,112,FALSE
+"Midway Island",139,0,FALSE
+"Monaco",140,35,FALSE
+"Mongolia",141,2800,TRUE
+"Montenegro",273,632,TRUE
+"Montserrat",142,11,FALSE
+"Morocco",143,32273,TRUE
+"Mozambique",144,23930,TRUE
+"Myanmar",28,48337,TRUE
+"Namibia",147,2324,TRUE
+"Nauru",148,10,FALSE
+"Nepal",149,30486,TRUE
+"Netherlands",150,16665,TRUE
+"Netherlands Antilles",151,203,FALSE
+"New Caledonia",153,255,FALSE
+"New Zealand",156,4415,TRUE
+"Nicaragua",157,5870,TRUE
+"Niger",158,16069,TRUE
+"Nigeria",159,162471,TRUE
+"Niue",160,3,FALSE
+"Norfolk Island",161,2.128,FALSE
+"Northern Mariana Islands",163,69,FALSE
+"Norway",162,4925,TRUE
+"Occupied Palestinian Territory",299,4152,TRUE
+"Oman",221,2846,TRUE
+"Pacific Islands Trust Territory",164,202,FALSE
+"Pakistan",165,176745,TRUE
+"Palau",180,21,FALSE
+"Panama",166,3571,TRUE
+"Papua New Guinea",168,7014,TRUE
+"Paraguay",169,6568,TRUE
+"Peru",170,29400,TRUE
+"Philippines",171,94852,TRUE
+"Pitcairn Islands",172,0,FALSE
+"Poland",173,38399,TRUE
+"Portugal",174,10690,TRUE
+"Puerto Rico",177,3817,TRUE
+"Qatar",179,1870,TRUE
+"Republic of Korea",117,48391,TRUE
+"Republic of Moldova",146,4379,TRUE
+"Réunion",182,856,TRUE
+"Romania",183,23207,TRUE
+"Russian Federation",185,148946,TRUE
+"Rwanda",184,10943,TRUE
+"Saint Helena",187,6,FALSE
+"Saint Kitts and Nevis",188,53,FALSE
+"Saint Lucia",189,176,FALSE
+"Saint Pierre and Miquelon",190,6,FALSE
+"Saint Vincent and the Grenadines",191,109,FALSE
+"Samoa",244,184,FALSE
+"San Marino",192,32,FALSE
+"Sao Tome and Principe",193,169,FALSE
+"Saudi Arabia",194,28083,TRUE
+"Senegal",195,12768,TRUE
+"Serbia",272,9856,TRUE
+"Serbia and Montenegro",186,10897,TRUE
+"Seychelles",196,87,FALSE
+"Sierra Leone",197,5997,TRUE
+"Singapore",200,5188,TRUE
+"Slovakia",199,5472,TRUE
+"Slovenia",198,2035,TRUE
+"Solomon Islands",25,552,TRUE
+"Somalia",201,9557,TRUE
+"South Africa",202,50460,TRUE
+"Spain",203,46455,TRUE
+"Sri Lanka",38,21045,TRUE
+"Sudan",206,43552,TRUE
+"Suriname",207,529,TRUE
+"Svalbard and Jan Mayen Islands",260,3.544,FALSE
+"Swaziland",209,1203,TRUE
+"Sweden",210,9441,TRUE
+"Switzerland",211,7702,TRUE
+"Syrian Arab Republic",212,20766,TRUE
+"Tajikistan",208,6977,TRUE
+"Thailand",216,69519,TRUE
+"The former Yugoslav Republic of Macedonia",154,2064,TRUE
+"Timor-Leste",176,1154,TRUE
+"Togo",217,6155,TRUE
+"Tokelau",218,2,FALSE
+"Tonga",219,105,FALSE
+"Trinidad and Tobago",220,1346,TRUE
+"Tunisia",222,10594,TRUE
+"Turkey",223,73640,TRUE
+"Turkmenistan",213,5105,TRUE
+"Turks and Caicos",224,39,FALSE
+"Tuvalu",227,10,FALSE
+"Uganda",226,34509,TRUE
+"Ukraine",230,51638,TRUE
+"United Arab Emirates",225,7891,TRUE
+"United Kingdom",229,62655,TRUE
+"United Republic of Tanzania",215,46218,TRUE
+"United States of America",231,313085,TRUE
+"United States Virgin Islands",240,109,FALSE
+"Uruguay",234,3380,TRUE
+"US Minor Is.",232,0,FALSE
+"USSR",228,290305,TRUE
+"Uzbekistan",235,27760,TRUE
+"Vanuatu",155,246,FALSE
+"Venezuela (Bolivarian Republic of)",236,29437,TRUE
+"Viet Nam",237,88792,TRUE
+"Wake Island",242,0,FALSE
+"Wallis and Futuna Islands",243,15,FALSE
+"West Bank",245,4152.369,TRUE
+"Western Sahara",205,548,TRUE
+"Yemen",249,24800,TRUE
+"Yemen Ar Rp",246,17838.691,TRUE
+"Yemen Dem",247,4965.387,TRUE
+"Yugoslav SFR",248,12677,TRUE
+"Zambia",251,13475,TRUE
+"Zimbabwe",181,12754,TRUE

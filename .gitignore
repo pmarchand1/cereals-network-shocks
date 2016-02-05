@@ -1,9 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
-data/
 *.html
-*.RData
 cereals-network-article.pdf
 cereals-network-supplementary.pdf
 model-flow-chart_v2.pdf

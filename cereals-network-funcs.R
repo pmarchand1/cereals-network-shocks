@@ -1,4 +1,5 @@
-# Functions for Trade and Food Security cascade model
+# Functions for shock propagation model in food trade networks
+# Author: Philippe Marchand (pmarchand@sesync.org)
 
 library(igraph) # for network metrics
 
@@ -58,7 +59,8 @@ get_trade_data <- function(year, prod_trade_file, stocks_file = NA, mov_avg = 0)
 #  kmax is the max number of iterations
 #  any shock below amin (as fraction of net supply) is negligible
 #  
-#  anim_out produces a different output to be sent to sim_animation
+#  anim_out produces an output that includes the variables after each iteration
+#  (to be used for animated visualizations of the output)
 sim_cascade <- function(dP, P0, R0, E0, cfrac = 0, asym = TRUE,
                         kmax = 50, amin = 1E-5, anim_out = FALSE) {
     nc <- length(P0)
