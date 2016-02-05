@@ -8,13 +8,13 @@ output:
 ```{r load_packages, include=FALSE}
 library(dplyr)
 library(tidyr)
-library(ggplot2)
-library(igraph)
+library(ggplot2) 
 library(knitr)
 library(stringr)
-library(xtable)
-library(cowplot)
-library(FAOSTAT)
+library(xtable) # LaTeX table formatting 
+library(cowplot) # for multi-panel plots
+library(FAOSTAT) # to acquire FAOSTAT data
+source("cereals-network-funcs.R")
 ```
 
 ```{r global_options, include=FALSE}
@@ -22,11 +22,6 @@ options(digits = 3, xtable.comment = FALSE)
 opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
-```{r load_funcs}
-source("tfs_cascade_funcs.R")
-source("tfs_map_funcs.R")
-source("res_00_funcs.R")
-```
 
 # Simulation model details
 
@@ -188,10 +183,12 @@ print(dP_reg, add.to.row = titlerow, caption.placement = "top",
 
 ```{r stats_vs_S, fig.width = 4, fig.height = 8, fig.cap = "\\label{fig:stats_vs_S} (a) $R$/$S$ ratio and (b) network degree (total number of incoming and outgoing links) as a function of $\\log S$ for the 2009 network. Labels identify (via their ISO alpha-3 codes) the top 10% exporters, responsible for ~86% of total exports."}
 
+# Get trade data for 2009
 trade_dat <- get_trade_data(2009, prod_trade_file = "data/cereals_prod_trade.RData", 
                             stocks_file = "data/cereals_stocks.RData", mov_avg = 2)
 trade_by_cty <- get_trade_stats_by_cty(trade_dat)
 
+# Pick 10% top exporters
 trade_10pct <- filter(trade_by_cty, percent_rank(E0_S0 * S0) >= 0.9)
 
 p1 <- ggplot(data = trade_by_cty, aes(x = log(S0), y = R0_S0)) +

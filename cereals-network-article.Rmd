@@ -12,13 +12,12 @@ linestretch: 1.5
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(maptools)
+library(maptools) # for wrld_simpl basemap
 library(igraph)
 library(knitr)
 library(stringr)
-library(xtable)
-library(cowplot)
-library(FAOSTAT)
+library(xtable) # LaTeX table formatting
+library(cowplot) # multi-panel plots
 source("cereals-network-funcs.R")
 ```
 
@@ -119,6 +118,8 @@ We use the cereals production and trade data from the Food and Agricultural Orga
 We obtain data on countries' cereals reserves from the Production, Supply and Distribution database of the United States Department of Agriculture's Foreign Agricultural Service (USDA-PSD, apps.fas.usda.gov/psdonline/, data acquired in October 2015). Reserves for nine commodities (barley, corn, millet, mixed grain, oats, rice, rye, sorghum and wheat) were converted in kcal equivalents and aggregated by country and year, and political entities were rectified to match the FAO data above. While the USDA-PSD data does not include some minor crops covered by FAOSTAT (including buckwheat, fonio and quinoa), those nine commodities account for over 90% of the total grain production reported by FAOSTAT over the 25-year period. Note that since USDA-PSD reports aggregated reserves for the European Union (pre-1998) and EU-25 (1998 and after), we divide these reserves between EU countries for each year in proportion to their share of the EU cereals production.
 
 ```{r load_trade_data, results = "asis"}
+# Extract production, trade and reserves data for 1994-1998, 2001-2005 and 2007-2011
+#  The code to generate these data files can be found in data/ folder
 years <- c(1996, 2003, 2009)
 trade_dat <- lapply(years, get_trade_data, mov_avg = 2,
                     prod_trade_file = "data/cereals_prod_trade.RData", 
@@ -126,6 +127,7 @@ trade_dat <- lapply(years, get_trade_data, mov_avg = 2,
 names(trade_dat) <- years
 trade_st <- bind_rows(lapply(trade_dat, get_trade_stats_sum), .id = "year")
     
+# Print summary statistics table
 kable(trade_st,
       col.names = c("med. year", "$N_c$", "$\\sum P$ (kcal)", "$\\sum R$ (kcal)", 
                     "# trade links", "$\\sum F$ (kcal)",  
@@ -139,6 +141,7 @@ kable(trade_st,
 For model input, we average the cereals production, reserves and trade over three five-year periods (1994-1998, 2001-2005 and 2007-2011), which we refer to by their median years (1996, 2003 and 2009). The averaging process smooths out short-term perturbations in the data, and the set of countries was constant over each period (no merge/split event). The evolution of the cereals trade across these three time periods shows a decrease of global reserves and an increase in global trade, both expressed as a fraction of total production (Table 2).
 
 ```{r r_scaling}
+# Perform R scaling (same global R / global P ratio as 2009)
 Rscale <- trade_st$RP_ratio / trade_st$RP_ratio[trade_st$year == "2009"]
 trade_Rscaled <- Map(
     function(dat, scal) {
@@ -146,6 +149,7 @@ trade_Rscaled <- Map(
         dat
     }, trade_dat, Rscale)
 
+# Perform R/S scaling (same R/S ratio per country as 2009)
 S0 <- lapply(trade_dat, function(x) x$P0 + colSums(x$E0) - rowSums(x$E0))
 RSscale <- trade_dat$`2009`$R0 / S0$`2009`
 trade_RSscaled <- Map(
@@ -163,6 +167,9 @@ To separate the effects of changes in reserves and trade flows on model outcomes
 In this study, we refer to a model run as a set of $N_c$ simulations, to observe the effect of a production shock initiated (separately) at each country in the dataset. For each run, we select one of the three time periods, a specific scaling of the reserves (see above) and three global parameters: the initial shock magnitude as a fraction of the target country's production ($f_p$), the fraction of reserves that are available to absorb a shock ($f_r$), as well as the fraction of a shock absorbed by consumption after reserves are depleted ($f_c$, as defined in our model above). In practice, setting $f_r < 1$ may reflect the fact that some of the reported reserves are already committed to trade or that countries are unwilling to let reserves drop below some floor amount. 
 
 ```{r run_sims}
+
+# This function performs a model run (calling sim_allc) per year with one set of global parameters
+#  and merges the output in a single data frame
 get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
     res <- lapply(trade_data, 
                   function(x) sim_allc(pfrac, x$P0, rfrac*x$R0, x$E0, cfrac))
@@ -172,6 +179,9 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
     sim_stats <- bind_rows(lapply(st, get_sim_stats_by_cty))
     cbind(fp = pfrac, fr = rfrac, fc = cfrac, trade_stats, sim_stats)
 }
+
+# Generate all the simulation results needed for the article
+#  and merge in a single data frame with "params" column identifying model run
 
 # stats_by_cty <- bind_rows(
 #    "02_05"    = get_multiyear_sim_results(trade_dat, 0.2, 0.5, 0.01),
@@ -187,11 +197,12 @@ get_multiyear_sim_results <- function(trade_data, pfrac, rfrac, cfrac) {
 # stats_by_cty <- mutate(stats_by_cty, tot_dS_scl = tot_dS_S0 / fp, 
 #                     tot_dC_scl = tot_dC_S0 / fp, self_dC_scl = self_dC_S0 / fp)
 
-# Params groups
-Rscal <- c("02_05", "Rscaled", "RSscaled")
-Cfrac <- c("02_05", "02_05_005", "02_05_01")
-PR <- c("01_025", "015_05", "02_05", "03_1")
+# Split model runs into three groups
+Rscal <- c("02_05", "Rscaled", "RSscaled")  # effect of reserves scaling
+Cfrac <- c("02_05", "02_05_005", "02_05_01") # effect of fc parameter
+PR <- c("01_025", "015_05", "02_05", "03_1")  # effect of fp, fr parameters
 
+# Save simulation output to avoid regenerating each time article is compiled
 # saveRDS(stats_by_cty, "stats_by_cty.RData")
 stats_by_cty <- readRDS("stats_by_cty.RData")
 
@@ -245,6 +256,8 @@ We performed the simulations and all data processing steps in R [@r2015], using 
 Before considering how historical changes in the cereals trade network affect shock propagation, we first examine the effect of the adjustable global parameters on simulation outputs; these results are shown in Table \ref{tab:pars_stat} using the most recent (2009) data version. Between the first two rows, both $f_p$ and $f_r$ are doubled so that the ratio of shock intensity to initial reserves remains constant. This leaves most impact metrics unaffected, except for the mean relative change in consumption ($\Delta c_{rel}$), which nearly doubles. In this scenario, even if countries have larger available reserves, their trade flows remain the same and may limit the amount of residual shock that can be passed along, resulting in a greater impact on consumption. The same effect would explain the decrease in evenness $J$ between the two cases. Predictably, raising $f_c$ (third and fouth rows) monotonically increases the magnitude of $\Delta c_{rel}$ while leaving other statistics unchanged.
 
 ```{r tab_pars_stat, results = "asis"}
+# Calculate summary statistics for model runs using different fp, fr, fc
+# Print output table
 hits_summ <- stats_by_cty %>%
     filter(params %in% c(Cfrac, PR), year == 2009) %>%
     group_by(params) %>%
@@ -286,6 +299,8 @@ Compared to the first two cases, the last two rows in Table \ref{tab:pars_stat} 
 Based on model runs with a fixed set of global parameters, the most recent trade network (2009) appears to have a greater capacity to absorb shocks compared with those of 1996 and 2003, as evidenced by a decrease in hits by country ($N_{h}$, $N_{hc}$) and a lesser impact on consumption ($\Delta c_{rel}$) (Table \ref{tab:Rscal_stat}). However, this pattern is largely driven by the distribution of reserves rather than increased trade. Despite the total reserves being greater in 1996 and 2003 -- which explains why the impact metrics are even higher when scaling these total reserves to 2009 levels -- they are less evenly distributed, with a few countries (such as China) holding a very large proportion of their net supply in reserve and more countries having no reported reserves. By scaling relative reserves by country to their 2009 values ($R/S$-scaling), we see that the number of hits by country monotonically increases over time, with a small increase in the mean evenness of the impact across simulations, all factors consistent with an increase of the number and volume of trade connections.
 
 ```{r tab_Rscal_stat, results = "asis"}
+# Calculate summary statistics for different years and scaling of reserves
+# Print output table
 hits_summ_Rscal <- stats_by_cty %>%
     filter(params %in% c(Rscal), year != 2009 | params == "02_05") %>%
     group_by(params, year) %>%
@@ -343,6 +358,7 @@ theme_map <- function(base_size = 12, base_family = "Helvetica") {
               axis.text = element_blank(), axis.title = element_blank())
 }
 
+# Join dS/S0, dC/S0 by country to map data frame
 plot_params <- c("02_05_1996", "RSscaled_1996", "02_05_2009")
 ds_dc <- stats_by_cty %>% unite(version, params, year, sep = "_") %>%
     filter(version %in% plot_params) %>%
@@ -373,6 +389,7 @@ Figures \ref{fig:ds_map} and \ref{fig:dc_map} present the total impact on the su
 Countries where the simulated shocks produce substantial decreases in domestic consumption are concentrated in a few regions: Central America, the Sahel and East Africa, South and South-East Asia and (in 1996 only) the former Soviet Union (Fig. \ref{fig:dc_map}). Compared with the original 1996 data, simulations using the $R/S$-scaled reserves led to smaller impacts to consumption overall. Changes in the trade network itself greatly reduced the $\Delta C$ impact on many countries, including most of the former Soviet Union, Afghanistan, Sudan and Tanzania, but led to larger impacts in others, notably in Central America. 
 
 ```{r dc_prep}
+# Extract dC related stats for countries where dC/S0 < -1% in at least one sim 
 stats_dC <- stats_by_cty %>% 
     filter(params == "02_05" | params == "RSscaled" & year %in% c("1996", "2003"), 
            tot_dC_scl < 0) %>%
@@ -382,8 +399,10 @@ stats_dC <- stats_by_cty %>%
     group_by(cty) %>%
     filter(min(tot_dC_S0) < -0.01)
 
+# Filter to countries with external shock of more than 1% of S0
 stats_dC_ext <- filter(stats_dC, ext_dC_S0 < -0.01)
 
+# Run simulations to extract detailed info on changes in consumption
 # st_02_05 <- lapply(trade_dat, function(x) {
 #   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
 # })
@@ -392,7 +411,7 @@ stats_dC_ext <- filter(stats_dC, ext_dC_S0 < -0.01)
 #   get_stats_allc(sim_allc(0.2, x$P0, 0.5*x$R0, x$E0, 0.01))  
 # })
 
-
+# Function to convert dC matrix in "tall" format (country_from, country_to, dC)
 get_dC_tall <- function(st, countries) {
     dC <- st$dC_S0[rownames(st$dC_S0) %in% countries, ]
     cbind(to = rownames(dC), as.data.frame(dC)) %>%
@@ -407,9 +426,11 @@ get_dC_tall <- function(st, countries) {
 #     .id = "params"
 # )
 
+# Save simulation output to avoid recalculating each time article is compiled
 # saveRDS(dC_all, "dC_all.RData")
 dC_all <- readRDS("dC_all.RData")
 
+# Separate internal shocks (dCself) and external shocks (dCext) and generate graphs
 dCext <- dC_all %>%
     filter(to %in% stats_dC_ext$cty, to != from, year != "2003") %>%
     group_by(to, from) %>% filter(any(dC_S0 < -1E-3))
@@ -462,7 +483,11 @@ We can gain additional insights on these results by separating the share of $\De
 Conversely, a majority of the 24 countries receiving a substantial (>1% of $S_0$) external shock are more impacted under the 2009 trade network (Fig. \ref{fig:dc_self_ext}(b)), reflecting an increased reliance on food imports from one or a few trade partners. A look at the specific external shocks causing these $\Delta C$ show that they originate from nine source countries (Fig. \ref{fig:dCext_net}), with 14 of these shocks -- including the four greatest in magnitude -- caused by an initial production drop in the United States. While the other target countries in the graph experience this risk from one or two simulations, the $\Delta C$ in Singapore is spread over five sources; it also has the lowest aggregate $\Delta C$, only slightly above the 1% threshold.
 
 ```{r dCext_net, results = "hide"}
+
 #```{r dCext_net, fig.width = 6, fig.height = 6, fig.cap = "\\label{fig:dCext_net}Graph of countries (in blue) having to reduce consumption for a shock initiated at source countries (in orange). The width of each edge is proportional to $\\log \\Delta C / S_0$. Simulations initialized with 2009 input data and global parameters $f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01. Country labels correspond to their ISO alpha-3 codes."}
+
+# Note: This graph was manually edited to add country code key (in fig_dCext_net.png)
+
 dCext_graph <- graph_from_data_frame(
     filter(dCext, params == "02_05", year == "2009") %>%
     mutate(width = log(-dC_S0) + 7) %>%

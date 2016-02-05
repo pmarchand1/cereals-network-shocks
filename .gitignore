@@ -4,4 +4,7 @@
 data/
 *.html
 *.RData
-*.pdf
+cereals-network-article.pdf
+cereals-network-supplementary.pdf
+model-flow-chart_v2.pdf
+fig_dCext_net.pdf
