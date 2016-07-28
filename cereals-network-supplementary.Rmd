@@ -70,7 +70,122 @@ $$ \Delta S'_{t+1,j} = \sum_k \Delta F_{t,kj} - \sum_k \Delta F_{t,jk}
                       + \Delta B_{t,j} \, ,$$
 where the last term serves to remove the effect of the country's own actions. When $\Delta S'_{t+1, j} = 0$ for all $j$, all shocks have been absorbed internally and the simulation ends.
 
-# Supplementary tables and figures
+
+# Sensitivity analysis for global simulation parameters
+
+Our model includes three adjustable global simulation parameters: the fraction of domestic production lost in the initial shock ($f_p$), the fraction of reserves available to buffer a shock ($f_r$) and the fraction of a shock absorbed by domestic consumption before it is passed on to trade partners ($f_c$). In Table \ref{tab:pars_stat}, we show how changes in these parameters affect the simulation results, using the most recent (2009) data version. For a more detailed description of the output statistics, see the main text of the article.
+
+Between the first two rows of Table \ref{tab:pars_stat}, both $f_p$ and $f_r$ are doubled so that the ratio of shock intensity to initial reserves remains constant. This leaves most impact metrics unaffected, except for the mean relative change in consumption ($\Delta c_{rel}$), which nearly doubles. In this scenario, even if countries have larger available reserves, their trade flows remain the same and may limit the amount of residual shock that can be passed along, resulting in a greater impact on consumption. The same effect would explain the decrease in evenness $J$ between the two cases. Predictably, raising $f_c$ (third and fouth rows) monotonically increases the magnitude of $\Delta c_{rel}$ while leaving other statistics unchanged.
+
+```{r tab_pars_stat, results = "asis"}
+# Calculate summary statistics for model runs using different fp, fr, fc
+# Print output table
+stats_by_cty <- readRDS("stats_by_cty.RData")
+
+Cfrac <- c("02_05", "02_05_005", "02_05_01") # effect of fc parameter
+PR <- c("01_025", "015_05", "02_05", "03_1")  # effect of fp, fr parameters
+hits_summ <- stats_by_cty %>%
+    filter(params %in% c(Cfrac, PR), year == 2009) %>%
+    group_by(params) %>%
+    summarise(fp = mean(fp), fr = mean(fr), fc = mean(fc),
+              nshocks = sum(self_dC_scl < 0), 
+              hits_m = mean(hits), hits_sd = sd(hits),
+              mean_tot_dS = mean(tot_dS_scl), sd_tot_dS = sd(tot_dS_scl),
+              mean_even = mean(even), sd_even = sd(even),
+              hitsC = mean(hitsC), mean_tot_dC = mean(tot_dC_scl)) %>%
+    select(-params) %>% arrange(desc(nshocks))
+
+titlerow <- list(pos = list(0, 0),
+    command = c(paste("$f_p$ & $f_r$ & $f_c$ & $N_s$ &",
+                      "\\multicolumn{2}{c}{$N_{h}$} &", 
+                      "\\multicolumn{2}{c}{$\\Delta s_{rel}$} &",
+                      "\\multicolumn{2}{c}{$J$} & $N_{hc}$ &",
+                      "$\\Delta c_{rel}$ \\\\\n"),
+                paste("& & & & mean & s.d. & mean & s.d. &",
+                      "mean & s.d. & mean & mean \\\\\n")))
+pars_stat <- xtable(hits_summ, label = "tab:pars_stat",
+    caption = paste("Effect of global parameters on simulation outputs using",
+                    "the 2009 data. Each row aggregates results from a set of",
+                    "simulations, each with a shock originating",
+                    "in a different country. $N_s$ is the number of simulations where", 
+                    "a shock is passed; $N_h$ (resp., $N_{hc}$) is",
+                    "the number of times a country's supply (resp., consumption)",
+                    "are affected across simulations; $\\Delta s_{rel}$",
+                    "(resp., $\\Delta c_{rel}$) is a relative measure of the total",
+                    "change in a country's supply (resp., consumption) across simulations;",
+                    "$J$ is the evenness of impact between simulations. Means and",
+                    "standard deviations are calculated across affected countries.",
+                    "\\newline"),
+    align = "lrrr|rrrrrrrrr")
+print(pars_stat, add.to.row = titlerow, caption.placement = "top",
+      include.rownames = FALSE, include.colnames = FALSE, 
+      hline.after = c(-1, 0, 2, 4, 6))
+```
+
+Compared to the first two cases, the last two rows in Table \ref{tab:pars_stat} represent a 50% increase in shock intensity and a doubling of reserves. As more countries can absorb a shock through their reserves, the number of simulations where a shock is passed ($N_s$), as well as the mean number of hits ($N_{h}$ and $N_{hc}$) by country all decrease. Since a larger portion of the shock is absorbed by the initial target, shocks become less spread out and the evenness $J$ decreases.
+
+```{r prep_dc09}
+stats_by_cty <- readRDS("stats_by_cty.RData")
+
+dC_09 <- stats_by_cty %>%
+    filter(year == "2009", !(params %in% c("Rscaled", "RSscaled"))) %>%
+    mutate(ext_dC_scl = tot_dC_scl - self_dC_scl,
+           ext_dC_S0 = tot_dC_S0 - self_dC_S0) %>%
+    group_by(cty)
+
+
+dCself09 <- filter(dC_09, min(self_dC_S0) < -0.05)
+    
+cty_order <- filter(dCself09, params == "02_05") %>%
+    ungroup() %>% arrange(self_dC_S0)
+
+dCself09$cty <- factor(dCself09$cty, levels = cty_order$cty)
+dCself09$params <- as.factor(dCself09$params)
+
+dCext09 <- filter(dC_09, min(ext_dC_S0) < -0.05)
+
+cty_order <- filter(dCext09, params == "02_05") %>%
+    ungroup() %>% arrange(ext_dC_S0)
+
+dCext09$cty <- factor(dCext09$cty, levels = cty_order$cty)
+dCext09$params <- as.factor(dCext09$params)
+```
+
+```{r fig_dc09, fig.width = 6, fig.height = 8, fig.cap = "\\label{fig:dc09} Decrease in consumption ($\\Delta C$) as a fraction of initial net supply ($S_0$) from (a) internal shocks (i.e. shock was initiated at the target country) and (b) external shocks (initiated at other countries), for varying settings of the global parameters $f_p$, $f_r$ and $f_c$. The trade network was initialized with 2009 data. The countries shown in each plot (identified by their ISO alpha-3 codes) include all those experiencing a 5% decrease in consumption for at least one parameter set."}
+
+p1 <- ggplot(data = dCself09, aes(x = cty, y = self_dC_S0, 
+                                  color = params, group = params)) +
+    labs(x = "country", y = expression(Delta * C[internal] / S[0])) +
+    geom_point() + geom_line() +
+    scale_color_brewer(type = "qual") +
+    theme(axis.text.x = element_text(angle = 45, size = 8),
+          axis.text.y = element_text(size = 8),
+          legend.position = "none")
+
+p2 <- ggplot(data = dCext09, aes(x = cty, y = ext_dC_S0, 
+                                 color = params, group = params)) +
+    labs(x = "country", y = expression(Delta * C[external] / S[0]), color = "") +
+    geom_point() + geom_line() +
+    scale_color_brewer(type = "qual", 
+        labels = c(expression(paste(f[p] == 0.1, ", ", f[r] == 0.25, ", ", f[c] == 0.01)),
+                   expression(paste(f[p] == 0.15,", ", f[r] == 0.5, ", ", f[c] == 0.01)),
+                   expression(paste(f[p] == 0.2, ", ", f[r] == 0.5, ", ", f[c] == 0.01)),
+                   expression(paste(f[p] == 0.2, ", ", f[r] == 0.5, ", ", f[c] == 0.05)),
+                   expression(paste(f[p] == 0.2, ", ", f[r] == 0.5, ", ", f[c] == 0.1)),
+                   expression(paste(f[p] == 0.3, ", ", f[r] == 1, ", ", f[c] == 0.01)))
+        ) +
+    theme(axis.text.x = element_text(angle = 45, size = 8),
+          axis.text.y = element_text(size = 8),
+          legend.position = "bottom",
+          legend.text = element_text(size = 8))
+
+plot_grid(p1, p2, labels = c("a", "b"), ncol = 1)
+```
+
+Figure \ref{fig:dc09} shows the effect of global simulation parameters on the decrease in domestic consumption for the countries most affected by internal and external production shocks. Countries are ordered along the $x$-axis based on the magnitude of impact in the base scenario ($f_p$ = 0.2, $f_r$ = 0.5 and $f_c$ = 0.01). While the impact on $\Delta C$ increases with the magnitude of the initial shock (i.e. increasing $f_p$), the set of most affected countries is fairly consistent. Note that the exact ordering of these countries across parameter sets may vary based on their specific position in the trade network. For example, since a proportion $f_c$ of each shock received is absorbed by consumption, trade hubs such as Singapore (SGP) and Qatar (QAT) that receive many external shocks are most affected by a change in this parameter (Figure \ref{fig:dc09}b).
+
+
+# Additional tables and figures
 
 ```{r tab:crop_list, results = "asis"}
 crop_list <- read.delim("data/crop_list.tsv", stringsAsFactors = FALSE) %>%
