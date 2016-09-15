@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/47884949.svg)](https://zenodo.org/badge/latestdoi/47884949)
+
 # Description
 
 This directory contains the R/RMarkdown code and associated files necessary to reproduce the paper by Marchand *et al.* [Reserves and trade jointly determine exposure to food supply shocks](http://iopscience.iop.org/article/10.1088/1748-9326/11/9/095009).
